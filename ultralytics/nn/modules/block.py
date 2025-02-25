@@ -266,7 +266,7 @@ class BiFPN(nn.Module):
             features = bifpn(features)
             print(f"After BiFPN layer {i}: {[f.shape for f in features]}")
 
-        return featuress
+        return features
         
 class DFL(nn.Module):
     """
