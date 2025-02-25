@@ -223,16 +223,22 @@ class BiFPN(nn.Module):
     def __init__(self, c1, c2=256, n=3):
         super().__init__()
         self.n = n
-        size = c1  # [P3_channels, P4_channels, P5_channels]
+        
+        # c1 is a list of channel sizes [P3_channels, P4_channels, P5_channels]
+        # Extract the channel sizes directly
+        p3_channels = c1[0]
+        p4_channels = c1[1]
+        p5_channels = c1[2]
+        
         feature_size = c2
         
         # Initialize the convolutions for each input feature map
-        self.p3 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
-        self.p4 = nn.Conv2d(size[1], feature_size, kernel_size=1, stride=1, padding=0)
-        self.p5 = nn.Conv2d(size[2], feature_size, kernel_size=1, stride=1, padding=0)
+        self.p3 = nn.Conv2d(p3_channels, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p4 = nn.Conv2d(p4_channels, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p5 = nn.Conv2d(p5_channels, feature_size, kernel_size=1, stride=1, padding=0)
         
         # p6 is obtained via a 3x3 stride-2 conv on C5
-        self.p6 = nn.Conv2d(size[2], feature_size, kernel_size=3, stride=2, padding=1)
+        self.p6 = nn.Conv2d(p5_channels, feature_size, kernel_size=3, stride=2, padding=1)
         
         # p7 is computed by applying ReLU followed by a 3x3 stride-2 conv on p6
         self.p7 = ConvBlock(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
