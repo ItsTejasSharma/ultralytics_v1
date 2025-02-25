@@ -19,7 +19,7 @@ __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10D
 
 
 class Detect(nn.Module):
-    """YOLO Detect head for detection models."""
+    """YOLO Detect head for detection models with BiFPN support."""
 
     dynamic = False  # force grid reconstruction
     export = False  # export mode
@@ -35,10 +35,13 @@ class Detect(nn.Module):
         """Initializes the YOLO detection layer with specified number of classes and channels."""
         super().__init__()
         self.nc = nc  # number of classes
-        self.nl = len(ch)  # number of detection layers
+        self.nl = len(ch)  # number of detection layers (5 for BiFPN: P3, P4, P5, P6, P7)
         self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
         self.no = nc + self.reg_max * 4  # number of outputs per anchor
-        self.stride = torch.zeros(self.nl)  # strides computed during build
+        
+        # Set strides for BiFPN feature maps: [8, 16, 32, 64, 128] for [P3, P4, P5, P6, P7]
+        self.stride = torch.tensor([8, 16, 32, 64, 128]) if self.nl == 5 else torch.zeros(self.nl)
+        
         c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
         self.cv2 = nn.ModuleList(
             nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch
@@ -60,7 +63,7 @@ class Detect(nn.Module):
         if self.end2end:
             self.one2one_cv2 = copy.deepcopy(self.cv2)
             self.one2one_cv3 = copy.deepcopy(self.cv3)
-
+            
     def forward(self, x):
         """Concatenates and returns predicted bounding boxes and class probabilities."""
         if self.end2end:
