@@ -279,7 +279,7 @@ class BiFPN(nn.Module):
 
         # IMPORTANT: Instead of returning the list directly, return each feature map as a separate output
         # This makes it compatible with the Detect head which expects individual tensors
-        return features[0], features[1], features[2], features[3], features[4]
+        return [features[0], features[1], features[2], features[3], features[4]]
         
 class DFL(nn.Module):
     """
