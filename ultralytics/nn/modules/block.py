@@ -247,29 +247,26 @@ class BiFPN(nn.Module):
         self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size, epsilon) for _ in range(n)])
     
     def forward(self, x):
-        """
-        Args:
-            x (list): List of features [P3, P4, P5]
-        
-        Returns:
-            list: List of features [P3_out, P4_out, P5_out, P6_out, P7_out]
-        """
         p3, p4, p5 = x
-        
+        print(f"Input shapes: P3={p3.shape}, P4={p4.shape}, P5={p5.shape}")
+    
         # Calculate the input column of BiFPN
-        p3_x = self.p3(p3)        
+         p3_x = self.p3(p3)        
         p4_x = self.p4(p4)
         p5_x = self.p5(p5)
         p6_x = self.p6(p5)
         p7_x = self.p7(p6_x)
-        
+    
+        print(f"After initial conv: P3={p3_x.shape}, P4={p4_x.shape}, P5={p5_x.shape}, P6={p6_x.shape}, P7={p7_x.shape}")
+    
         features = [p3_x, p4_x, p5_x, p6_x, p7_x]
-
+    
         # Pass through each BiFPN layer
-        for bifpn in self.bifpn_layers:
+        for i, bifpn in enumerate(self.bifpn_layers):
             features = bifpn(features)
+            print(f"After BiFPN layer {i}: {[f.shape for f in features]}")
 
-        return features
+        return featuress
         
 class DFL(nn.Module):
     """
