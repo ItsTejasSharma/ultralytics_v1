@@ -63,6 +63,10 @@ from ultralytics.nn.modules import (
     TorchVision,
     WorldDetect,
     v10Detect,
+    BiFPN,
+    BiFPNBlock,
+    DepthwiseConvBlock,
+    ConvBlock,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1043,6 +1047,12 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                     args.extend((True, 1.2))
         elif m is AIFI:
             args = [ch[f], *args]
+        elif m is BiFPN:
+            # Assuming args contains the channel sizes and other required params
+            c1 = [ch[x] for x in f]  # Get list of input channel sizes
+            feature_size = args[0]  # Expected first argument is feature_size
+            num_layers = args[1] if len(args) > 1 else 2  # Default to 2 layers if not specified
+            args = [c1, feature_size, num_layers]  # Adjust args to match BiFPN's expected inputs
         elif m in frozenset({HGStem, HGBlock}):
             c1, cm, c2 = ch[f], args[0], args[1]
             args = [c1, cm, c2, *args[2:]]
