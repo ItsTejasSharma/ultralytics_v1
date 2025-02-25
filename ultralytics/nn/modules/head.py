@@ -68,14 +68,24 @@ class Detect(nn.Module):
         """Concatenates and returns predicted bounding boxes and class probabilities."""
         if self.end2end:
             return self.forward_end2end(x)
-
-        for i in range(self.nl):
-            x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
+        
+        # Check if input is a list of lists (from BiFPN)
+        if isinstance(x, list) and all(isinstance(item, torch.Tensor) for item in x):
+            # Process each feature map
+            outputs = []
+            for i in range(self.nl):
+                if i < len(x):  # Make sure we don't go out of bounds
+                    outputs.append(torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1))
+            x = outputs
+        else:
+            # Original processing for non-BiFPN inputs
+            for i in range(self.nl):
+                x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
+                
         if self.training:  # Training path
             return x
         y = self._inference(x)
         return y if self.export else (y, x)
-
     def forward_end2end(self, x):
         """
         Performs forward pass of the v10Detect module.
