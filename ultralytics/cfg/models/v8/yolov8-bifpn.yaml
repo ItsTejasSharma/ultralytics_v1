@@ -48,5 +48,5 @@ head:
   # YOLOv8.0n head
 head:
   # Use three essential feature maps as inputs to the BiFPN
-  - [[4, 6, 9], 1, BiFPN, [256, 512, 1024, 2]]  # Example: Use outputs from P3, P4, P5 layers as inputs  
+  - [[4, 6, 9], 1, BiFPN, [256, 2]]  # Example: Use outputs from P3, P4, P5 layers as inputs  
   - [[10, 10, 10], 1, Detect, [nc]] # Detect(P3, P4, P5)
