@@ -80,7 +80,31 @@ class Detect(nn.Module):
             return x
         y = self._inference(x)
         return y if self.export else (y, x)
-        
+
+    def forward(self, x):
+        print("Detect head input type:", type(x))  # Debug print
+        # print("Detect head input shapes:", [xi.shape for xi in x])  # Debug print
+
+        if self.end2end:
+            return self.forward_end2end(x)
+
+        # No need to convert to a list anymore; x is already a list/tuple of tensors.
+
+        z = []  # Create an empty list to store the concatenated outputs
+        for i in range(self.nl):
+        # Apply cv2 and cv3 to the ith feature map *separately*
+            cv2_out = self.cv2[i](x[i])
+            cv3_out = self.cv3[i](x[i])
+
+        # Concatenate the outputs for *this* level
+            cat_out = torch.cat((cv2_out, cv3_out), 1)
+            z.append(cat_out)  # Append the concatenated output to the list
+
+        if self.training:
+            return z  # Return the list of concatenated outputs
+        y = self._inference(z) # Pass the *list* to _inference
+        return y if self.export else (y, z)
+    
     def forward_end2end(self, x):
         """
         Performs forward pass of the v10Detect module.
