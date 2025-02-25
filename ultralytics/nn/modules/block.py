@@ -157,7 +157,7 @@ class BiFPNBlock(nn.Module):
         p6_out = self.p6_out(w2[0, 2] * p6_x + w2[1, 2] * p6_td + w2[2, 2] * F.interpolate(p5_out, scale_factor=0.5, mode='nearest'))
         p7_out = self.p7_out(w2[0, 3] * p7_x + w2[1, 3] * p7_td + w2[2, 3] * F.interpolate(p6_out, scale_factor=0.5, mode='nearest'))
 
-        return [p3_out, p4_out, p5_out, p6_out, p7_out]
+        return p3_out, p4_out, p5_out, p6_out, p7_out
         
 # class BiFPN(nn.Module):
 #     """
