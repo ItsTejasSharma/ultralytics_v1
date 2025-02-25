@@ -63,20 +63,20 @@ class Detect(nn.Module):
         if self.end2end:
             self.one2one_cv2 = copy.deepcopy(self.cv2)
             self.one2one_cv3 = copy.deepcopy(self.cv3)
-            
+        
+
     def forward(self, x):
-        """Concatenates and returns predicted bounding boxes and class probabilities."""
+        print("Detect head input type:", type(x))  # Debug print
+        print("Detect head input shapes:", [xi.shape for xi in x])  # Debug print
         if self.end2end:
             return self.forward_end2end(x)
 
-        # Handle the case where x is a tuple (from BiFPN)
         if isinstance(x, tuple):
-            # Convert tuple to list
             x = list(x)
-            
+    
         for i in range(self.nl):
             x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
-        if self.training:  # Training path
+        if self.training:
             return x
         y = self._inference(x)
         return y if self.export else (y, x)
