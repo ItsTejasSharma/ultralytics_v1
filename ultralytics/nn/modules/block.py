@@ -58,37 +58,43 @@ __all__ = (
 
 class DepthwiseConvBlock(nn.Module):
     """
-    Depthwise seperable convolution. 
-    
-    
+    Depthwise separable convolution with SiLU activation and optional BatchNorm freezing.
     """
-    def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, freeze_bn=False):
-        super(DepthwiseConvBlock,self).__init__()
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride, 
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, dilation=1, freeze_bn=False):
+        super().__init__()
+        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride,
                                padding, dilation, groups=in_channels, bias=False)
-        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, 
+        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1,
                                    stride=1, padding=0, dilation=1, groups=1, bias=False)
-        
-        
-        self.bn = nn.BatchNorm2d(out_channels, momentum=0.9997, eps=4e-5)
-        self.act = nn.ReLU()
-        
+
+        self.bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=1e-3)  # Adjusted values
+        self.act = nn.SiLU()
+        self.freeze_bn = freeze_bn
+        if self.freeze_bn:
+            self.bn.eval()
+            for param in self.bn.parameters():
+                param.requires_grad = False
+
     def forward(self, inputs):
         x = self.depthwise(inputs)
         x = self.pointwise(x)
         x = self.bn(x)
         return self.act(x)
-    
+        
 class ConvBlock(nn.Module):
     """
-    Convolution block with Batch Normalization and ReLU activation.
-    
+    Convolution block with Batch Normalization and SiLU activation and optional BatchNorm freezing.
     """
     def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, padding=0, dilation=1, freeze_bn=False):
-        super(ConvBlock,self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding)
-        self.bn = nn.BatchNorm2d(out_channels, momentum=0.9997, eps=4e-5)
-        self.act = nn.ReLU()
+        self.bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=1e-3) # Adjusted values
+        self.act = nn.SiLU()
+        self.freeze_bn = freeze_bn
+        if self.freeze_bn:
+            self.bn.eval()
+            for param in self.bn.parameters():
+                param.requires_grad = False
 
     def forward(self, inputs):
         x = self.conv(inputs)
@@ -97,7 +103,17 @@ class ConvBlock(nn.Module):
 
 class BiFPNBlock(nn.Module):
     """
-    Bi-directional Feature Pyramid Network
+    Bi-directional Feature Pyramid Network Block.
+
+    Args:
+        feature_size (int): The number of channels in the feature maps.
+        epsilon (float): A small value to prevent division by zero.
+
+    Inputs:
+        inputs (list of Tensor): A list of feature maps [p3, p4, p5, p6, p7].
+
+    Outputs:
+        list of Tensor: A list of refined feature maps [p3_out, p4_out, p5_out, p6_out, p7_out].
     """
     def __init__(self, feature_size=64, epsilon=0.0001):
         super(BiFPNBlock, self).__init__()
@@ -144,6 +160,22 @@ class BiFPNBlock(nn.Module):
         return [p3_out, p4_out, p5_out, p6_out, p7_out]
     
 class BiFPN(nn.Module):
+    """
+    Bi-directional Feature Pyramid Network.
+
+    Args:
+        size (list of int):  The number of channels for the input feature maps (C3, C4, C5).
+        feature_size (int): The number of channels in the BiFPN layers.
+        num_layers (int): The number of BiFPN layers to stack.
+        epsilon (float): A small value to prevent division by zero.
+
+    Inputs:
+        inputs (list of Tensor): A list of feature maps [C3, C4, C5] from the backbone.
+
+    Outputs:
+        list of Tensor: A list of refined feature maps [p3_out, p4_out, p5_out, p6_out, p7_out].
+
+    """
     def __init__(self, size, feature_size=64, num_layers=2, epsilon=0.0001):
         super(BiFPN, self).__init__()
         self.epsilon = epsilon
