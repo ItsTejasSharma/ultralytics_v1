@@ -67,7 +67,7 @@ class Detect(nn.Module):
 
     def forward(self, x):
         print("Detect head input type:", type(x))  # Debug print
-        print("Detect head input shapes:", [xi.shape for xi in x])  # Debug print
+        # print("Detect head input shapes:", [xi.shape for xi in x])  # Debug print
         if self.end2end:
             return self.forward_end2end(x)
 
