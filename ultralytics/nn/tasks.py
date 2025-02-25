@@ -1055,7 +1055,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [c1, feature_size, num_layers]  # Adjust args to match BiFPN's expected inputs
     
             # Add a wrapper to handle the output format
-            class BiFPNWrapper(nn.Module):
+            class BiFPNWrapper(torch.nn.Module):
                 def __init__(self, bifpn_module):
                     super().__init__()
                     self.bifpn = bifpn_module
