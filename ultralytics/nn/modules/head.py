@@ -17,60 +17,84 @@ from .utils import bias_init_with_prob, linear_init
 
 __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10Detect"
 
-class Detect(nn.Module):
+    class Detect(nn.Module):
     """YOLO Detect head for detection models with BiFPN support."""
 
-    dynamic = False  # force grid reconstruction
-    export = False  # export mode
-    format = None  # export format
-    end2end = False  # end2end
-    max_det = 300  # max_det
-    shape = None
-    anchors = torch.empty(0)  # init
-    strides = torch.empty(0)  # init
-    legacy = False  # backward compatibility for v3/v5/v8/v9 models
+        dynamic = False  # force grid reconstruction
+        export = False  # export mode
+        format = None  # export format
+        end2end = False  # end2end
+        max_det = 300  # max_det
+        shape = None
+        anchors = torch.empty(0)  # init
+        strides = torch.empty(0)  # init
+        legacy = False  # backward compatibility for v3/v5/v8/v9 models
 
-    def __init__(self, nc=80, ch=()):
+        def __init__(self, nc=80, ch=()):
         """Initializes the YOLO detection layer with specified number of classes and channels."""
-        super().__init__()
-        self.nc = nc  # number of classes
-        self.nl = len(ch)  # number of detection layers (5 for BiFPN: P3, P4, P5, P6, P7)
-        self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
-        self.no = nc + self.reg_max * 4  # number of outputs per anchor
+            super().__init__()
+            self.nc = nc  # number of classes
+            self.nl = len(ch)  # number of detection layers (5 for BiFPN: P3, P4, P5, P6, P7)
+            self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
+            self.no = nc + self.reg_max * 4  # number of outputs per anchor
         
-        # Set strides for BiFPN feature maps: [8, 16, 32, 64, 128] for [P3, P4, P5, P6, P7]
-        self.stride = torch.tensor([8, 16, 32, 64, 128]) if self.nl == 5 else torch.zeros(self.nl)
+            # Set strides for BiFPN feature maps: [8, 16, 32, 64, 128] for [P3, P4, P5, P6, P7]
+            self.stride = torch.tensor([8, 16, 32, 64, 128]) if self.nl == 5 else torch.zeros(self.nl)
         
-        c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
-        self.cv2 = nn.ModuleList(
-            nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch
-        )
-        self.cv3 = nn.ModuleList(
-            nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3), nn.Conv2d(c3, self.nc, 1)) for x in ch
-        )
-        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+            c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
+            self.cv2 = nn.ModuleList(
+                nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch
+            )
+            self.cv3 = nn.ModuleList(
+                nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3), nn.Conv2d(c3, self.nc, 1)) for x in ch
+            )
+            self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
 
-    def forward(self, x):
-        """Forward pass for the Detect head."""
-        # Debug prints to understand input structure
-        print(f"Detect forward input type: {type(x)}")
-        if isinstance(x, (list, tuple)):
-            print(f"Number of feature maps: {len(x)}")
-            print(f"Feature map shapes: {[xi.shape for xi in x]}")
-        else:
-            print(f"Input shape: {x.shape if hasattr(x, 'shape') else 'unknown'}")
+        def forward(self, x):
+            """Forward pass for the Detect head."""
+            # Debug prints to understand input structure
+            print(f"Detect forward input type: {type(x)}")
     
-        if isinstance(x, (list, tuple)):  # If x is already a list or tuple
-            if len(x) != self.nl:
-                print(f"WARNING: Expected {self.nl} feature maps, got {len(x)}")
+            # Handle potential nested tuple/list structure
+            if isinstance(x, (list, tuple)):
+                print(f"Number of elements in x: {len(x)}")
         
-            shape = x[0].shape  # BCHW
-            print(f"Base shape for processing: {shape}")
+            # Check if the first element is also a tuple/list or a tensor
+                if len(x) > 0:
+                    if isinstance(x[0], (list, tuple)):
+                        print("Nested structure detected!")
+                        print(f"First element type: {type(x[0])}")
+                        print(f"First element length: {len(x[0])}")
+                        # Try to flatten the structure
+                        x = list(x[0]) if len(x) == 1 else list(x)
+                        print(f"After flattening: {len(x)} elements")
+            
+                    # Now try to print shapes safely
+                    shapes = []
+                    for i, xi in enumerate(x):
+                        if hasattr(xi, 'shape'):
+                            shapes.append(f"{i}: {xi.shape}")
+                        else:
+                            shapes.append(f"{i}: {type(xi)} (no shape attribute)")
+                    print(f"Element details: {shapes}")
+            else:
+                print(f"Input shape: {x.shape if hasattr(x, 'shape') else 'unknown'}")
+    
+            # Ensure x is a list of tensors
+            if isinstance(x, tuple):
+                x = list(x)
+    
+            if all(hasattr(xi, 'shape') for xi in x):  # If x is a list/tuple of tensors
+                if len(x) != self.nl:
+                    print(f"WARNING: Expected {self.nl} feature maps, got {len(x)}")
         
-            z = []  # Create an empty list to store the concatenated outputs
-            for i in range(self.nl):
-                print(f"Processing feature map {i} with shape {x[i].shape}")
-                print(f"Using cv2[{i}] and cv3[{i}] for this feature map")
+                shape = x[0].shape  # BCHW
+                print(f"Base shape for processing: {shape}")
+        
+                z = []  # Create an empty list to store the concatenated outputs
+                for i in range(min(self.nl, len(x))):
+                    print(f"Processing feature map {i} with shape {x[i].shape}")
+                    print(f"Using cv2[{i}] and cv3[{i}] for this feature map")
             
                 # Apply cv2 and cv3 to the ith feature map
                 try:
@@ -85,7 +109,7 @@ class Detect(nn.Module):
                     z.append(cat_out)  # Append the concatenated output to the list
                 except Exception as e:
                     print(f"Error processing feature map {i}: {e}")
-                    print(f"Feature map shape: {x[i].shape}")
+                    print(f"Feature map shape: {x[i].shape if hasattr(x[i], 'shape') else type(x[i])}")
                     print(f"cv2[{i}] structure: {self.cv2[i]}")
                     print(f"cv3[{i}] structure: {self.cv3[i]}")
                     raise
@@ -100,44 +124,11 @@ class Detect(nn.Module):
             y = self._inference(z)  # Pass the list to _inference
             return y if self.export else (y, z)
         else:
-            # Handle the case where x is a single tensor (though this shouldn't happen with BiFPN)
-            error_msg = f"Expected input to be a list or tuple of tensors, got {type(x)}"
+            # Handle the case where x is not a list of tensors
+            error_msg = f"Expected input to be a list/tuple of tensors, but got elements of types: {[type(xi) for xi in x]}"
             print(f"ERROR: {error_msg}")
             raise TypeError(error_msg)
-
-        def _inference(self, x):
-            """Decode predicted bounding boxes and class probabilities based on multiple-level feature maps."""
-            # Inference path
-            shape = x[0].shape  # BCHW
-            x_cat = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2)
-            if self.format != "imx" and (self.dynamic or self.shape != shape):
-                self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
-                self.shape = shape
-
-            if self.export and self.format in {"saved_model", "pb", "tflite", "edgetpu", "tfjs"}:  # avoid TF FlexSplitV ops
-                box = x_cat[:, : self.reg_max * 4]
-                cls = x_cat[:, self.reg_max * 4 :]
-            else:
-                box, cls = x_cat.split((self.reg_max * 4, self.nc), 1)
-
-            if self.export and self.format in {"tflite", "edgetpu"}:
-                # Precompute normalization factor to increase numerical stability
-                # See https://github.com/ultralytics/ultralytics/issues/7371
-                grid_h = shape[2]
-                grid_w = shape[3]
-                grid_size = torch.tensor([grid_w, grid_h, grid_w, grid_h], device=box.device).reshape(1, 4, 1)
-                norm = self.strides / (self.stride[0] * grid_size)
-                dbox = self.decode_bboxes(self.dfl(box) * norm, self.anchors.unsqueeze(0) * norm[:, :2])
-            elif self.export and self.format == "imx":
-                dbox = self.decode_bboxes(
-                    self.dfl(box) * self.strides, self.anchors.unsqueeze(0) * self.strides, xywh=False
-                )
-                return dbox.transpose(1, 2), cls.sigmoid().permute(0, 2, 1)
-            else:
-                dbox = self.decode_bboxes(self.dfl(box), self.anchors.unsqueeze(0)) * self.strides
-
-            return torch.cat((dbox, cls.sigmoid()), 1)
-
+        
 class Segment(Detect):
     """YOLO Segment head for segmentation models."""
 
