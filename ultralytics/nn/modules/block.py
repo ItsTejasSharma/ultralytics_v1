@@ -251,7 +251,7 @@ class BiFPN(nn.Module):
         print(f"Input shapes: P3={p3.shape}, P4={p4.shape}, P5={p5.shape}")
     
         # Calculate the input column of BiFPN
-         p3_x = self.p3(p3)        
+        p3_x = self.p3(p3)        
         p4_x = self.p4(p4)
         p5_x = self.p5(p5)
         p6_x = self.p6(p5)
