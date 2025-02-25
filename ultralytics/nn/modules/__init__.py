@@ -58,6 +58,10 @@ from .block import (
     ResNetLayer,
     SCDown,
     TorchVision,
+    BiFPN,
+    BiFPNBlock,
+    DepthwiseConvBlock,
+    ConvBlock,
 )
 from .conv import (
     CBAM,
@@ -162,4 +166,8 @@ __all__ = (
     "TorchVision",
     "Index",
     "A2C2f",
+    "BiFPN",
+    "BiFPNBlock",
+    "DepthwiseConvBlock",
+    "ConvBlock",
 )
