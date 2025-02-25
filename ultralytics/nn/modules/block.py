@@ -100,7 +100,7 @@ class ConvBlock(nn.Module):
         x = self.conv(inputs)
         x = self.bn(x)
         return self.act(x)
-
+        
 class BiFPNBlock(nn.Module):
     """
     Bi-directional Feature Pyramid Network Block.
@@ -158,7 +158,7 @@ class BiFPNBlock(nn.Module):
         p7_out = self.p7_out(w2[0, 3] * p7_x + w2[1, 3] * p7_td + w2[2, 3] * F.interpolate(p6_out, scale_factor=0.5, mode='nearest'))
 
         return [p3_out, p4_out, p5_out, p6_out, p7_out]
-    
+        
 # class BiFPN(nn.Module):
 #     """
 #     Bi-directional Feature Pyramid Network.
@@ -214,37 +214,34 @@ class BiFPNBlock(nn.Module):
 class BiFPN(nn.Module):
     """
     Bi-directional Feature Pyramid Network.
-    
+
     Args:
-        c1 (list): List of input feature map channels [P3, P4, P5]
-        c2 (int): Output feature size for all levels
+        c1 (int): Number of channels in P3
+        c2 (int): Number of channels in P4
+        c3 (int): Number of channels in P5
+        c4 (int): Output feature size for all levels
         n (int): Number of BiFPN layers to stack
     """
-    def __init__(self, c1, c2=256, n=3):
-        super().__init__()
+    def __init__(self, c1, c2, c3, c4=256, n=3, epsilon=0.0001):
+        super(BiFPN, self).__init__()
         self.n = n
+        self.epsilon = epsilon
         
-        # c1 is a list of channel sizes [P3_channels, P4_channels, P5_channels]
-        # Extract the channel sizes directly
-        p3_channels = c1[0]
-        p4_channels = c1[1]
-        p5_channels = c1[2]
-        
-        feature_size = c2
+        feature_size = c4
         
         # Initialize the convolutions for each input feature map
-        self.p3 = nn.Conv2d(p3_channels, feature_size, kernel_size=1, stride=1, padding=0)
-        self.p4 = nn.Conv2d(p4_channels, feature_size, kernel_size=1, stride=1, padding=0)
-        self.p5 = nn.Conv2d(p5_channels, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p3 = nn.Conv2d(c1, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p4 = nn.Conv2d(c2, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p5 = nn.Conv2d(c3, feature_size, kernel_size=1, stride=1, padding=0)
         
         # p6 is obtained via a 3x3 stride-2 conv on C5
-        self.p6 = nn.Conv2d(p5_channels, feature_size, kernel_size=3, stride=2, padding=1)
+        self.p6 = nn.Conv2d(c3, feature_size, kernel_size=3, stride=2, padding=1)
         
         # p7 is computed by applying ReLU followed by a 3x3 stride-2 conv on p6
         self.p7 = ConvBlock(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
 
         # Create BiFPN layers
-        self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size) for _ in range(n)])
+        self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size, epsilon) for _ in range(n)])
     
     def forward(self, x):
         """
