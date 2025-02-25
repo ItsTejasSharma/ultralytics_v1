@@ -60,58 +60,59 @@ class Detect(nn.Module):
         )
         self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
 
-        if self.end2end:
-            self.one2one_cv2 = copy.deepcopy(self.cv2)
-            self.one2one_cv3 = copy.deepcopy(self.cv3)
-
     def forward(self, x):
-        print("Detect head input type:", type(x))  # Debug print
-        # print("Detect head input shapes:", [xi.shape for xi in x])  # Debug print
+        """Forward pass for the Detect head."""
+        if isinstance(x, (list, tuple)):  # Ensure x is a list or tuple
+            z = []  # Create an empty list to store the concatenated outputs
+            for i in range(self.nl):
+                # Apply cv2 and cv3 to the ith feature map *separately*
+                cv2_out = self.cv2[i](x[i])
+                cv3_out = self.cv3[i](x[i])
 
-        if self.end2end:
-            return self.forward_end2end(x)
+                # Concatenate the outputs for *this* level
+                cat_out = torch.cat((cv2_out, cv3_out), 1)
+                z.append(cat_out)  # Append the concatenated output to the list
 
-        # No need to convert to a list; x is already a list/tuple of tensors.
+            if self.training:
+                return z  # Return the list of concatenated outputs
+            y = self._inference(z)  # Pass the *list* to _inference
+            return y if self.export else (y, z)  # Return (y, z) instead of (y, x)
+        else:
+            raise TypeError(f"Expected input to be a list or tuple of tensors, got {type(x)}")
 
-        z = []  # Create an empty list to store the concatenated outputs
-        for i in range(self.nl):
-            # Apply cv2 and cv3 to the ith feature map *separately*
-            cv2_out = self.cv2[i](x[i])
-            cv3_out = self.cv3[i](x[i])
+    def _inference(self, x):
+        """Decode predicted bounding boxes and class probabilities based on multiple-level feature maps."""
+        # Inference path
+        shape = x[0].shape  # BCHW
+        x_cat = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2)
+        if self.format != "imx" and (self.dynamic or self.shape != shape):
+            self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
+            self.shape = shape
 
-            # Concatenate the outputs for *this* level
-            cat_out = torch.cat((cv2_out, cv3_out), 1)
-            z.append(cat_out)  # Append the concatenated output to the list
+        if self.export and self.format in {"saved_model", "pb", "tflite", "edgetpu", "tfjs"}:  # avoid TF FlexSplitV ops
+            box = x_cat[:, : self.reg_max * 4]
+            cls = x_cat[:, self.reg_max * 4 :]
+        else:
+            box, cls = x_cat.split((self.reg_max * 4, self.nc), 1)
 
-        if self.training:
-            return z  # Return the list of concatenated outputs
-        y = self._inference(z) # Pass the *list* to _inference
-        return y if self.export else (y, z) # this should be (y,z) instead of (y,x)    
-    
-    def forward_end2end(self, x):
-        """
-        Performs forward pass of the v10Detect module.
+        if self.export and self.format in {"tflite", "edgetpu"}:
+            # Precompute normalization factor to increase numerical stability
+            # See https://github.com/ultralytics/ultralytics/issues/7371
+            grid_h = shape[2]
+            grid_w = shape[3]
+            grid_size = torch.tensor([grid_w, grid_h, grid_w, grid_h], device=box.device).reshape(1, 4, 1)
+            norm = self.strides / (self.stride[0] * grid_size)
+            dbox = self.decode_bboxes(self.dfl(box) * norm, self.anchors.unsqueeze(0) * norm[:, :2])
+        elif self.export and self.format == "imx":
+            dbox = self.decode_bboxes(
+                self.dfl(box) * self.strides, self.anchors.unsqueeze(0) * self.strides, xywh=False
+            )
+            return dbox.transpose(1, 2), cls.sigmoid().permute(0, 2, 1)
+        else:
+            dbox = self.decode_bboxes(self.dfl(box), self.anchors.unsqueeze(0)) * self.strides
 
-        Args:
-            x (tensor): Input tensor.
-
-        Returns:
-            (dict, tensor): If not in training mode, returns a dictionary containing the outputs of both one2many and one2one detections.
-                           If in training mode, returns a dictionary containing the outputs of one2many and one2one detections separately.
-        """
-        x_detach = [xi.detach() for xi in x]
-        one2one = [
-            torch.cat((self.one2one_cv2[i](x_detach[i]), self.one2one_cv3[i](x_detach[i])), 1) for i in range(self.nl)
-        ]
-        for i in range(self.nl):
-            x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
-        if self.training:  # Training path
-            return {"one2many": x, "one2one": one2one}
-
-        y = self._inference(one2one)
-        y = self.postprocess(y.permute(0, 2, 1), self.max_det, self.nc)
-        return y if self.export else (y, {"one2many": x, "one2one": one2one})
-
+        return torch.cat((dbox, cls.sigmoid()), 1)
+        
     def _inference(self, x):
         """Decode predicted bounding boxes and class probabilities based on multiple-level feature maps."""
         # Inference path
