@@ -17,7 +17,7 @@ from .utils import bias_init_with_prob, linear_init
 
 __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10Detect"
 
-    class Detect(nn.Module):
+class Detect(nn.Module):
     """YOLO Detect head for detection models with BiFPN support."""
 
         dynamic = False  # force grid reconstruction
