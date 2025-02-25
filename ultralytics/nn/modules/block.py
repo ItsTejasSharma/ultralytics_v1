@@ -241,8 +241,7 @@ class BiFPN(nn.Module):
         self.p6 = nn.Conv2d(p5_channels, feature_size, kernel_size=3, stride=2, padding=1)
         
         # p7 is computed by applying ReLU followed by a 3x3 stride-2 conv on p6
-        self.p7 = Conv(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-
+        self.p7 = Conv(feature_size, feature_size, k=3, s=2, p=1)
         # Create BiFPN layers
         self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size, epsilon) for _ in range(n)])
     
