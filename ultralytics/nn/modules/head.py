@@ -52,56 +52,91 @@ class Detect(nn.Module):
 
     def forward(self, x):
         """Forward pass for the Detect head."""
-        if isinstance(x, (list, tuple)):  # Ensure x is a list or tuple
+        # Debug prints to understand input structure
+        print(f"Detect forward input type: {type(x)}")
+        if isinstance(x, (list, tuple)):
+            print(f"Number of feature maps: {len(x)}")
+            print(f"Feature map shapes: {[xi.shape for xi in x]}")
+        else:
+            print(f"Input shape: {x.shape if hasattr(x, 'shape') else 'unknown'}")
+    
+        if isinstance(x, (list, tuple)):  # If x is already a list or tuple
+            if len(x) != self.nl:
+                print(f"WARNING: Expected {self.nl} feature maps, got {len(x)}")
+        
+            shape = x[0].shape  # BCHW
+            print(f"Base shape for processing: {shape}")
+        
             z = []  # Create an empty list to store the concatenated outputs
             for i in range(self.nl):
-                # Apply cv2 and cv3 to the ith feature map *separately*
-                cv2_out = self.cv2[i](x[i])
-                cv3_out = self.cv3[i](x[i])
+                print(f"Processing feature map {i} with shape {x[i].shape}")
+                print(f"Using cv2[{i}] and cv3[{i}] for this feature map")
+            
+                # Apply cv2 and cv3 to the ith feature map
+                try:
+                    cv2_out = self.cv2[i](x[i])
+                    print(f"cv2_out shape: {cv2_out.shape}")
+                    cv3_out = self.cv3[i](x[i])
+                    print(f"cv3_out shape: {cv3_out.shape}")
+                
+                    # Concatenate the outputs for this level
+                    cat_out = torch.cat((cv2_out, cv3_out), 1)
+                    print(f"Concatenated output shape: {cat_out.shape}")
+                    z.append(cat_out)  # Append the concatenated output to the list
+                except Exception as e:
+                    print(f"Error processing feature map {i}: {e}")
+                    print(f"Feature map shape: {x[i].shape}")
+                    print(f"cv2[{i}] structure: {self.cv2[i]}")
+                    print(f"cv3[{i}] structure: {self.cv3[i]}")
+                    raise
 
-                # Concatenate the outputs for *this* level
-                cat_out = torch.cat((cv2_out, cv3_out), 1)
-                z.append(cat_out)  # Append the concatenated output to the list
-
+            print(f"Final z list length: {len(z)}")
+            print(f"Final z shapes: {[zi.shape for zi in z]}")
+        
             if self.training:
                 return z  # Return the list of concatenated outputs
-            y = self._inference(z)  # Pass the *list* to _inference
-            return y if self.export else (y, z)  # Return (y, z) instead of (y, x)
+        
+            print("Calling _inference with z")
+            y = self._inference(z)  # Pass the list to _inference
+            return y if self.export else (y, z)
         else:
-            raise TypeError(f"Expected input to be a list or tuple of tensors, got {type(x)}")
+            # Handle the case where x is a single tensor (though this shouldn't happen with BiFPN)
+            error_msg = f"Expected input to be a list or tuple of tensors, got {type(x)}"
+            print(f"ERROR: {error_msg}")
+            raise TypeError(error_msg)
 
-    def _inference(self, x):
-        """Decode predicted bounding boxes and class probabilities based on multiple-level feature maps."""
-        # Inference path
-        shape = x[0].shape  # BCHW
-        x_cat = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2)
-        if self.format != "imx" and (self.dynamic or self.shape != shape):
-            self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
-            self.shape = shape
+        def _inference(self, x):
+            """Decode predicted bounding boxes and class probabilities based on multiple-level feature maps."""
+            # Inference path
+            shape = x[0].shape  # BCHW
+            x_cat = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2)
+            if self.format != "imx" and (self.dynamic or self.shape != shape):
+                self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
+                self.shape = shape
 
-        if self.export and self.format in {"saved_model", "pb", "tflite", "edgetpu", "tfjs"}:  # avoid TF FlexSplitV ops
-            box = x_cat[:, : self.reg_max * 4]
-            cls = x_cat[:, self.reg_max * 4 :]
-        else:
-            box, cls = x_cat.split((self.reg_max * 4, self.nc), 1)
+            if self.export and self.format in {"saved_model", "pb", "tflite", "edgetpu", "tfjs"}:  # avoid TF FlexSplitV ops
+                box = x_cat[:, : self.reg_max * 4]
+                cls = x_cat[:, self.reg_max * 4 :]
+            else:
+                box, cls = x_cat.split((self.reg_max * 4, self.nc), 1)
 
-        if self.export and self.format in {"tflite", "edgetpu"}:
-            # Precompute normalization factor to increase numerical stability
-            # See https://github.com/ultralytics/ultralytics/issues/7371
-            grid_h = shape[2]
-            grid_w = shape[3]
-            grid_size = torch.tensor([grid_w, grid_h, grid_w, grid_h], device=box.device).reshape(1, 4, 1)
-            norm = self.strides / (self.stride[0] * grid_size)
-            dbox = self.decode_bboxes(self.dfl(box) * norm, self.anchors.unsqueeze(0) * norm[:, :2])
-        elif self.export and self.format == "imx":
-            dbox = self.decode_bboxes(
-                self.dfl(box) * self.strides, self.anchors.unsqueeze(0) * self.strides, xywh=False
-            )
-            return dbox.transpose(1, 2), cls.sigmoid().permute(0, 2, 1)
-        else:
-            dbox = self.decode_bboxes(self.dfl(box), self.anchors.unsqueeze(0)) * self.strides
+            if self.export and self.format in {"tflite", "edgetpu"}:
+                # Precompute normalization factor to increase numerical stability
+                # See https://github.com/ultralytics/ultralytics/issues/7371
+                grid_h = shape[2]
+                grid_w = shape[3]
+                grid_size = torch.tensor([grid_w, grid_h, grid_w, grid_h], device=box.device).reshape(1, 4, 1)
+                norm = self.strides / (self.stride[0] * grid_size)
+                dbox = self.decode_bboxes(self.dfl(box) * norm, self.anchors.unsqueeze(0) * norm[:, :2])
+            elif self.export and self.format == "imx":
+                dbox = self.decode_bboxes(
+                    self.dfl(box) * self.strides, self.anchors.unsqueeze(0) * self.strides, xywh=False
+                )
+                return dbox.transpose(1, 2), cls.sigmoid().permute(0, 2, 1)
+            else:
+                dbox = self.decode_bboxes(self.dfl(box), self.anchors.unsqueeze(0)) * self.strides
 
-        return torch.cat((dbox, cls.sigmoid()), 1)
+            return torch.cat((dbox, cls.sigmoid()), 1)
 
 class Segment(Detect):
     """YOLO Segment head for segmentation models."""
