@@ -1053,6 +1053,18 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             feature_size = args[0]  # Expected first argument is feature_size
             num_layers = args[1] if len(args) > 1 else 2  # Default to 2 layers if not specified
             args = [c1, feature_size, num_layers]  # Adjust args to match BiFPN's expected inputs
+    
+            # Add a wrapper to handle the output format
+            class BiFPNWrapper(nn.Module):
+                def __init__(self, bifpn_module):
+                    super().__init__()
+                    self.bifpn = bifpn_module
+            
+            def forward(self, x):
+                return self.bifpn(x)
+    
+            m_ = BiFPNWrapper(m(*args))
+
         elif m in frozenset({HGStem, HGBlock}):
             c1, cm, c2 = ch[f], args[0], args[1]
             args = [c1, cm, c2, *args[2:]]
