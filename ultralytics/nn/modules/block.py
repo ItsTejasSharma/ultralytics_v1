@@ -135,8 +135,8 @@ class BiFPNBlock(nn.Module):
         self.w1_relu = nn.ReLU(inplace=False)  
         self.w2 = nn.Parameter(torch.ones(3, 4))
         self.w2_relu = nn.ReLU(inplace=False)
-    
-   def forward(self, inputs):
+        
+    def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
         
         # Use F.relu() directly instead of self.w1_relu and self.w2_relu
