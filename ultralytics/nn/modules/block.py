@@ -129,20 +129,22 @@ class BiFPNBlock(nn.Module):
         self.p6_out = DWConv(feature_size, feature_size)
         self.p7_out = DWConv(feature_size, feature_size)
         
-        # Initialize weights
-        self.w1 = nn.Parameter(torch.ones(2, 4))
-        # Explicitly set inplace=False to avoid the error
-        self.w1_relu = nn.ReLU(inplace=False)  
-        self.w2 = nn.Parameter(torch.ones(3, 4))
-        self.w2_relu = nn.ReLU(inplace=False)
-    
+        # Initialize weights with a uniform distribution for better training stability
+        self.w1 = nn.Parameter(torch.empty(2, 4))
+        nn.init.uniform_(self.w1, 0, 1)  # Initialize weights between 0 and 1
+        self.w2 = nn.Parameter(torch.empty(3, 4))
+        nn.init.uniform_(self.w2, 0, 1)  # Initialize weights between 0 and 1
+        
+        self.relu = nn.ReLU(inplace=False)  # Use a single ReLU instance
+
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
         
         # Calculate Top-Down Pathway
-        w1 = self.w1_relu(self.w1)
+        # Apply ReLU to a new tensor to avoid in-place operations on nn.Parameter
+        w1 = self.relu(self.w1)  # No need for clone() here, as ReLU creates a new tensor
         w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)
-        w2 = self.w2_relu(self.w2)
+        w2 = self.relu(self.w2)  # No need for clone() here, as ReLU creates a new tensor
         w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)
         
         p7_td = p7_x
