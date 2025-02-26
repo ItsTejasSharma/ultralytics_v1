@@ -131,9 +131,10 @@ class BiFPNBlock(nn.Module):
         
         # Initialize weights
         self.w1 = nn.Parameter(torch.ones(2, 4))
-        self.w1_relu = nn.ReLU()
+        # Explicitly set inplace=False to avoid the error
+        self.w1_relu = nn.ReLU(inplace=False)  
         self.w2 = nn.Parameter(torch.ones(3, 4))
-        self.w2_relu = nn.ReLU()
+        self.w2_relu = nn.ReLU(inplace=False)
     
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
