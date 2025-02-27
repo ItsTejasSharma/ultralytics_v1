@@ -445,16 +445,13 @@ class RTDETRDecoder(nn.Module):
 
         self._reset_parameters()
 
-        def forward(self, x):  # Only x as input
+    def forward(self, x):  # Only x as input
         """Runs the forward pass, returning bounding box and classification scores."""
         from ultralytics.models.utils.ops import get_cdn_group
-
         # Input projection and embedding
         feats, shapes = self._get_encoder_input(x)
-
         # Prepare denoising training (simplified for inference)
         dn_embed, dn_bbox, attn_mask, dn_meta = None, None, None, None  # No denoising during inference
-
         embed, refer_bbox, enc_bboxes, enc_scores = self._get_decoder_input(feats, shapes, dn_embed, dn_bbox)
 
         # Decoder
