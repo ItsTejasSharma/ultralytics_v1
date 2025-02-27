@@ -592,7 +592,7 @@ class RTDETRDetectionModel(DetectionModel):
                 if m.i == max(embed):
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         head = self.model[-1]
-        x = head([y[j] for j in head.f], batch)  # head inference
+        x = head([y[j] for j in head.f])  # head inference
         return x
 
 
