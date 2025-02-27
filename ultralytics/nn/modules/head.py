@@ -328,8 +328,8 @@ class RTDETRDecoder(nn.Module):
 
     def __init__(
         self,
-        nc=80,
-        ch=(512, 1024, 2048),
+        nc=2,
+        ch=(256, 256, 256, 256, 256),
         hd=256,  # hidden dim
         nq=300,  # num queries
         ndp=4,  # num decoder points
