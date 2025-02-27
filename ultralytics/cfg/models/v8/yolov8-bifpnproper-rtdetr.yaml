@@ -27,4 +27,4 @@ head:
   # Extract features from P3, P4, P5 for BiFPN
   - [[4, 6, 9], 1, BiFPN, [256, 3]] # BiFPN(c1=[P3, P4, P5], c2=256, n=3)
   
-  - [[-1], 1, RTDETRDecoder, [2, [256, 256, 256, 256, 256], 256]] # RTDETRDecoder(nc=2, ch=[256, 256, 256, 256, 256], hd=256)
+  - [[10], 1, RTDETRDecoder, [nc]] # RTDETRDecoder(nc=2, ch=[256, 256, 256, 256, 256], hd=256)
