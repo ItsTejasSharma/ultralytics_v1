@@ -28,4 +28,4 @@ head:
   - [[4, 6, 9], 1, BiFPN, [256, 3]] # BiFPN(c1=[P3, P4, P5], c2=256, n=3)
   
   # Detect head takes the 5 outputs from BiFPN (P3, P4, P5, P6, P7)
-  - [[-1], 1, RTDETRDecoder, [2, [nc]] # RTDETRDecoder(nc=2, ch=[256, 256, 256, 256, 256])
+  - [[-1], 1, RTDETRDecoder, [nc]] # Detect(P3, P4, P5, P6, P7)
