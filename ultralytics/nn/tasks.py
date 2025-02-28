@@ -1072,14 +1072,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
             if m in {Detect, Segment, Pose, OBB}:
                 m.legacy = legacy
-        elif m is RTDETRDecoder:
-            nc = args[0]
-            ch = args[1]
-            hd = args[2] if len(args) > 2 else 256
-            args = [nc, ch, hd]
-            c2 = ch[-1]
-            if verbose:
-                LOGGER.info(f"RTDETRDecoder args: nc={nc}, ch={ch}, hd={hd}")
+        elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+            args.insert(1, [ch[x] for x in f])
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]
