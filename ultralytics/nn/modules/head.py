@@ -417,7 +417,7 @@ class RTDETRDecoder(nn.Module):
         # Backbone feature projection
 
                 # NOTE: simplified version but it's not consistent with .pt weights.
-        self.input_proj = nn.ModuleList(Conv(x, hd, act=False) for x in ch)
+        self.input_proj = nn.ModuleList(nn.Sequential(Conv(x, hd, act=False)) for x in ch)
 
         # Transformer module
         decoder_layer = DeformableTransformerDecoderLayer(hd, nh, d_ffn, dropout, act, self.nl, ndp)
