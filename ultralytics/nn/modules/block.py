@@ -155,14 +155,15 @@ class BiFPNBlock(nn.Module):
         p5_td = self.p5_td(w1[0, 1] * p5_x + w1[1, 1] * F.interpolate(p6_td, scale_factor=2, mode='nearest'))
         p4_td = self.p4_td(w1[0, 2] * p4_x + w1[1, 2] * F.interpolate(p5_td, scale_factor=2, mode='nearest'))
         p3_td = self.p3_td(w1[0, 3] * p3_x + w1[1, 3] * F.interpolate(p4_td, scale_factor=2, mode='nearest'))
-        
+        print(f"BiFPNBlock: p3_td shape: {p3_td.shape if p3_td is not None else None}") # Check
         # Calculate Bottom-Up Pathway
         p3_out = p3_td
         p4_out = self.p4_out(w2[0, 0] * p4_x + w2[1, 0] * p4_td + w2[2, 0] * F.interpolate(p3_out, scale_factor=0.5, mode='nearest'))
         p5_out = self.p5_out(w2[0, 1] * p5_x + w2[1, 1] * p5_td + w2[2, 1] * F.interpolate(p4_out, scale_factor=0.5, mode='nearest'))
         p6_out = self.p6_out(w2[0, 2] * p6_x + w2[1, 2] * p6_td + w2[2, 2] * F.interpolate(p5_out, scale_factor=0.5, mode='nearest'))
         p7_out = self.p7_out(w2[0, 3] * p7_x + w2[1, 3] * p7_td + w2[2, 3] * F.interpolate(p6_out, scale_factor=0.5, mode='nearest'))
-
+        print(f"BiFPNBlock: p7_out shape: {p7_out.shape if p7_out is not None else None}") # Check
+        
         return p3_out, p4_out, p5_out, p6_out, p7_out
         
 # class BiFPN(nn.Module):
@@ -265,25 +266,23 @@ class BiFPN(nn.Module):
         print(f"Input shapes: P3={p3.shape}, P4={p4.shape}, P5={p5.shape}")
         
         # Calculate the input column of BiFPN
-        p3_x = self.p3(p3)        
+        p3_x = self.p3(p3)
         p4_x = self.p4(p4)
         p5_x = self.p5(p5)
         p6_x = self.p6(p5)
         p7_x = self.p7(p6_x)
-        
-        # Debug print
-        print(f"After initial conv: P3={p3_x.shape}, P4={p4_x.shape}, P5={p5_x.shape}, P6={p6_x.shape}, P7={p7_x.shape}")
-        
-        features = [p3_x, p4_x, p5_x, p6_x, p7_x]
 
-        # Pass through each BiFPN layer
+        print(f"BiFPN: p3_x shape: {p3_x.shape if p3_x is not None else None}")  # Check p3_x
+        print(f"BiFPN: p4_x shape: {p4_x.shape if p4_x is not None else None}")  # Check p4_x
+        print(f"BiFPN: p5_x shape: {p5_x.shape if p5_x is not None else None}")  # Check p5_x
+        print(f"BiFPN: p6_x shape: {p6_x.shape if p6_x is not None else None}")  # Check p6_x
+        print(f"BiFPN: p7_x shape: {p7_x.shape if p7_x is not None else None}")  # Check p7_x
+
+        features = [p3_x, p4_x, p5_x, p6_x, p7_x]
         for i, bifpn in enumerate(self.bifpn_layers):
             features = bifpn(features)
-            # Debug print
-            print(f"After BiFPN layer {i}: {[f.shape for f in features]}")
-
-        # IMPORTANT: Instead of returning the list directly, return each feature map as a separate output
-        # This makes it compatible with the Detect head which expects individual tensors
+            print(f"After BiFPN layer {i}: {[f.shape if f is not None else None for f in features]}") # Check each output
+    
         return features
         
 class DFL(nn.Module):
