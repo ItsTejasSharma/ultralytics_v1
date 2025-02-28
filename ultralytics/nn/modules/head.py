@@ -445,7 +445,8 @@ class RTDETRDecoder(nn.Module):
 
         self._reset_parameters()
         
-    def forward(self, x, batch=None):        """Runs the forward pass, returning bounding box and classification scores."""
+    def forward(self, x, batch=None):        
+        """Runs the forward pass, returning bounding box and classification scores."""
         from ultralytics.models.utils.ops import get_cdn_group
         # Input projection and embedding
         feats, shapes = self._get_encoder_input(x)
