@@ -516,29 +516,22 @@ class RTDETRDecoder(nn.Module):
         anchors = anchors.masked_fill(~valid_mask, float("inf"))
         return anchors, valid_mask
 
-    def _get_encoder_input(self, x):
-        """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
+def _get_encoder_input(self, x):
+        """Processes BiFPN outputs correctly before sending to Transformer."""
         
         processed_feats = []
-        shapes = []
-    
-        # Apply input projections **before** concatenating
         for i, feat in enumerate(x):
-            feat = self.input_proj[i](feat)  # Apply projection
+            feat = self.input_proj[i](feat)  # Apply projection BEFORE concatenation
             processed_feats.append(feat)
-            shapes.append(feat.shape[2:])  # Store height & width
     
-        # Resize features to match the largest spatial size
-        max_h, max_w = max(s[0] for s in shapes), max(s[1] for s in shapes)
-        processed_feats = [F.interpolate(feat, size=(max_h, max_w), mode="bilinear", align_corners=False) for feat in processed_feats]
-    
-        # Now concatenate along the channel dimension
-        feats = torch.cat(processed_feats, dim=1)  # [b, c, max_h, max_w]
-    
-        # Flatten for transformer processing
-        feats = feats.flatten(2).permute(0, 2, 1)  # [b, h*w, c]
+        # Concatenate after projection
+        feats = torch.cat(processed_feats, dim=1)  # [b, total_channels, h, w]
         
-        return feats, shapes
+        # Flatten for transformer processing
+        feats = feats.flatten(2).permute(0, 2, 1)  # [b, h*w, total_channels]
+        
+        return feats
+
 
 
 
