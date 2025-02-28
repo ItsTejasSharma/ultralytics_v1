@@ -234,6 +234,7 @@ class BiFPN(nn.Module):
         
         # Extract channel sizes from the list
         # p3_channels, p4_channels, p5_channels, p6_channels, p7_channels = c1
+        p3_channels, p4_channels, p5_channels = c1[0],c1[1],c1[2]
         feature_size = c2
         
         # Debug print
