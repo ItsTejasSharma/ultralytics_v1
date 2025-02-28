@@ -119,15 +119,15 @@ class BiFPNBlock(nn.Module):
         super(BiFPNBlock, self).__init__()
         self.epsilon = epsilon
         
-        self.p3_td = DWConv(feature_size, feature_size)
-        self.p4_td = DWConv(feature_size, feature_size)
-        self.p5_td = DWConv(feature_size, feature_size)
-        self.p6_td = DWConv(feature_size, feature_size)
+        self.p3_td = DepthwiseConvBlock(feature_size, feature_size)
+        self.p4_td = DepthwiseConvBlock(feature_size, feature_size)
+        self.p5_td = DepthwiseConvBlock(feature_size, feature_size)
+        self.p6_td = DepthwiseConvBlock(feature_size, feature_size)
         
-        self.p4_out = DWConv(feature_size, feature_size)
-        self.p5_out = DWConv(feature_size, feature_size)
-        self.p6_out = DWConv(feature_size, feature_size)
-        self.p7_out = DWConv(feature_size, feature_size)
+        self.p4_out = DepthwiseConvBlock(feature_size, feature_size)
+        self.p5_out = DepthwiseConvBlock(feature_size, feature_size)
+        self.p6_out = DepthwiseConvBlock(feature_size, feature_size)
+        self.p7_out = DepthwiseConvBlock(feature_size, feature_size)
         
         # Initialize weights with a uniform distribution for better training stability
         self.w1 = nn.Parameter(torch.empty(2, 4))
