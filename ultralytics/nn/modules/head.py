@@ -369,8 +369,8 @@ class RTDETRDecoder(nn.Module):
 
     def __init__(
         self,
-        nc=80,
-        ch=(512, 1024, 2048),
+        nc=2,
+        ch=(256, 256, 256, 256, 256),
         hd=256,  # hidden dim
         nq=300,  # num queries
         ndp=4,  # num decoder points
@@ -415,8 +415,7 @@ class RTDETRDecoder(nn.Module):
         self.num_decoder_layers = ndl
 
         # Backbone feature projection
-        self.input_proj = nn.ModuleList(nn.Sequential(nn.Conv2d(x, hd, 1, bias=False), nn.BatchNorm2d(hd)) for x in ch)
-        # NOTE: simplified version but it's not consistent with .pt weights.
+        self.input_proj = nn.ModuleList(nn.Sequential(nn.Conv2d(256, hd, 1, bias=False), nn.BatchNorm2d(hd)) for _ in range(5))        # NOTE: simplified version but it's not consistent with .pt weights.
         # self.input_proj = nn.ModuleList(Conv(x, hd, act=False) for x in ch)
 
         # Transformer module
@@ -446,25 +445,13 @@ class RTDETRDecoder(nn.Module):
 
         self._reset_parameters()
 
-    def forward(self, x, batch=None):
-        """Runs the forward pass of the module, returning bounding box and classification scores for the input."""
+    def forward(self, x):  # Only x as input
+        """Runs the forward pass, returning bounding box and classification scores."""
         from ultralytics.models.utils.ops import get_cdn_group
-
         # Input projection and embedding
         feats, shapes = self._get_encoder_input(x)
-
-        # Prepare denoising training
-        dn_embed, dn_bbox, attn_mask, dn_meta = get_cdn_group(
-            batch,
-            self.nc,
-            self.num_queries,
-            self.denoising_class_embed.weight,
-            self.num_denoising,
-            self.label_noise_ratio,
-            self.box_noise_scale,
-            self.training,
-        )
-
+        # Prepare denoising training (simplified for inference)
+        dn_embed, dn_bbox, attn_mask, dn_meta = None, None, None, None  # No denoising during inference
         embed, refer_bbox, enc_bboxes, enc_scores = self._get_decoder_input(feats, shapes, dn_embed, dn_bbox)
 
         # Decoder
@@ -478,12 +465,11 @@ class RTDETRDecoder(nn.Module):
             self.query_pos_head,
             attn_mask=attn_mask,
         )
-        x = dec_bboxes, dec_scores, enc_bboxes, enc_scores, dn_meta
-        if self.training:
-            return x
-        # (bs, 300, 4+nc)
+        x = dec_bboxes, dec_scores, enc_bboxes, enc_scores, dn_meta  # Intermediate results
+
+        # Combine bounding boxes and scores
         y = torch.cat((dec_bboxes.squeeze(0), dec_scores.squeeze(0).sigmoid()), -1)
-        return y if self.export else (y, x)
+        return y if self.export else (y, x) # Return combined output or intermediate results
 
     def _generate_anchors(self, shapes, grid_size=0.05, dtype=torch.float32, device="cpu", eps=1e-2):
         """Generates anchor bounding boxes for given shapes with specific grid size and validates them."""
@@ -552,10 +538,10 @@ class RTDETRDecoder(nn.Module):
         enc_scores = enc_outputs_scores[batch_ind, topk_ind].view(bs, self.num_queries, -1)
 
         embeddings = self.tgt_embed.weight.unsqueeze(0).repeat(bs, 1, 1) if self.learnt_init_query else top_k_features
-        if self.training:
-            refer_bbox = refer_bbox.detach()
-            if not self.learnt_init_query:
-                embeddings = embeddings.detach()
+        # Removed self.training conditional
+        refer_bbox = refer_bbox.detach()
+        if not self.learnt_init_query:
+            embeddings = embeddings.detach()
         if dn_embed is not None:
             embeddings = torch.cat([dn_embed, embeddings], 1)
 
@@ -585,6 +571,7 @@ class RTDETRDecoder(nn.Module):
         xavier_uniform_(self.query_pos_head.layers[1].weight)
         for layer in self.input_proj:
             xavier_uniform_(layer[0].weight)
+
 
 class v10Detect(Detect):
     """
