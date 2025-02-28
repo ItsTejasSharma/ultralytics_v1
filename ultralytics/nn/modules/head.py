@@ -596,7 +596,7 @@ class RTDETRDecoder(nn.Module):
         xavier_uniform_(self.query_pos_head.layers[0].weight)
         xavier_uniform_(self.query_pos_head.layers[1].weight)
         for layer in self.input_proj:
-            xavier_uniform_(layer[0].weight)
+            xavier_uniform_(layer[0].conv.weight)
 
 
 class v10Detect(Detect):
