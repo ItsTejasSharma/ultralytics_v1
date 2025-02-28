@@ -451,8 +451,11 @@ class RTDETRDecoder(nn.Module):
         from ultralytics.models.utils.ops import get_cdn_group
 
         # Input projection and embedding
-        print(f"RTDETRDecoder input type: {type(x)}")  # Debugging print
-        print(f"RTDETRDecoder input shapes: {[feat.shape for feat in x]}")
+        print(f"RTDETRDecoder input type: {type(x)}")
+        for i, feat in enumerate(x):
+            print(f"Feature {i} type: {type(feat)}")  # Print exact type
+            if isinstance(feat, tuple):
+            print(f"🚨 Feature {i} is a tuple with length {len(feat)}")
 
         x, shapes = self._get_encoder_input(x)
         # Prepare denoising training
