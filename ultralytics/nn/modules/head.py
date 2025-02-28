@@ -452,11 +452,15 @@ class RTDETRDecoder(nn.Module):
 
         # Input projection and embedding
         print(f"RTDETRDecoder input type: {type(x)}")
-        for i, feat in enumerate(x):
-            print(f"Feature {i} type: {type(feat)}")  # Print exact type
-            if isinstance(feat, tuple):
-                print(f"🚨 Feature {i} is a tuple with length {len(feat)}")
+    
+        # Convert tuples inside x to lists
+        x = [list(feat) if isinstance(feat, tuple) else feat for feat in x]
 
+        # Ensure each feature is a tensor
+        x = [torch.stack(feat) if isinstance(feat, list) and isinstance(feat[0], torch.Tensor) else feat for feat in x]
+
+        print(f"RTDETRDecoder input shapes: {[feat.shape for feat in x]}")
+        
         x, shapes = self._get_encoder_input(x)
         # Prepare denoising training
         dn_embed, dn_bbox, attn_mask, dn_meta = get_cdn_group(
