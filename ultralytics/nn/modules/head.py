@@ -455,7 +455,7 @@ class RTDETRDecoder(nn.Module):
         for i, feat in enumerate(x):
             print(f"Feature {i} type: {type(feat)}")  # Print exact type
             if isinstance(feat, tuple):
-            print(f"🚨 Feature {i} is a tuple with length {len(feat)}")
+                print(f"🚨 Feature {i} is a tuple with length {len(feat)}")
 
         x, shapes = self._get_encoder_input(x)
         # Prepare denoising training
