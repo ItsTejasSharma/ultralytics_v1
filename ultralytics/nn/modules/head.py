@@ -518,24 +518,28 @@ class RTDETRDecoder(nn.Module):
 
     def _get_encoder_input(self, x):
         """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
-        # Ensure x is a list of tensors, not a tuple
-        if isinstance(x, tuple):
-            x = list(x)  # Convert to list if needed
-
-        # Get projection features
-        for i, feat in enumerate(x):
-            print(f"Feature {i} type: {type(feat)} shape: {feat.shape}")
-            x[i] = self.input_proj[i](feat)  # Ensure feat is not a tuple
-        # Get encoder inputs
-        feats = []
+        
+        processed_feats = []
         shapes = []
-        for feat in x:
-            h, w = feat.shape[2:]
-            feats.append(feat.flatten(2).permute(0, 2, 1))  # [b, h*w, c]
-            shapes.append([h, w])  # [nl, 2]
-
-        feats = torch.cat(feats, 1)  # [b, h*w, c]
+    
+        # Apply input projections **before** concatenating
+        for i, feat in enumerate(x):
+            feat = self.input_proj[i](feat)  # Apply projection
+            processed_feats.append(feat)
+            shapes.append(feat.shape[2:])  # Store height & width
+    
+        # Resize features to match the largest spatial size
+        max_h, max_w = max(s[0] for s in shapes), max(s[1] for s in shapes)
+        processed_feats = [F.interpolate(feat, size=(max_h, max_w), mode="bilinear", align_corners=False) for feat in processed_feats]
+    
+        # Now concatenate along the channel dimension
+        feats = torch.cat(processed_feats, dim=1)  # [b, c, max_h, max_w]
+    
+        # Flatten for transformer processing
+        feats = feats.flatten(2).permute(0, 2, 1)  # [b, h*w, c]
+        
         return feats, shapes
+
 
 
     def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
