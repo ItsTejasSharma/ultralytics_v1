@@ -516,7 +516,7 @@ class RTDETRDecoder(nn.Module):
         anchors = anchors.masked_fill(~valid_mask, float("inf"))
         return anchors, valid_mask
 
-def _get_encoder_input(self, x):
+    def _get_encoder_input(self, x):
         """Processes BiFPN outputs correctly before sending to Transformer."""
         
         processed_feats = []
