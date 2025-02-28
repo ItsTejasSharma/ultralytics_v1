@@ -595,7 +595,6 @@ class RTDETRDetectionModel(DetectionModel):
         x = head([y[j] for j in head.f], batch)  # head inference
         return x
 
-
 class WorldModel(DetectionModel):
     """YOLOv8 World Model."""
 
