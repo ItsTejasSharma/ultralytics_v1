@@ -237,7 +237,7 @@ class BiFPN(nn.Module):
         feature_size = c2
         
         # Debug print
-        print(f"BiFPN init: P3={p3_channels}, P4={p4_channels}, P5={p5_channels}, feature_size={feature_size}, n={n}")
+        #print(f"BiFPN init: P3={p3_channels}, P4={p4_channels}, P5={p5_channels}, feature_size={feature_size}, n={n}")
         
         # Initialize the convolutions for each input feature map
         self.p3 = nn.Conv2d(p3_channels, feature_size, kernel_size=1, stride=1, padding=0)
