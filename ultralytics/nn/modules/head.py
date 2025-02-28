@@ -519,19 +519,26 @@ class RTDETRDecoder(nn.Module):
     def _get_encoder_input(self, x):
         """Processes BiFPN outputs correctly before sending to Transformer."""
         
-        processed_feats = []
-        for i, feat in enumerate(x):
-            feat = self.input_proj[i](feat)  # Apply projection BEFORE concatenation
-            processed_feats.append(feat)
+        # x is a list of 5 feature maps from BiFPN: [p3_out, p4_out, p5_out, p6_out, p7_out]
+        # We need to use the first 3 for compatibility with the decoder
+        x = x[:3]  # Take only p3, p4, p5 from BiFPN output
+        
+        # Get projection features
+        proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(x)]
+        
+        # Get encoder inputs
+        feats = []
+        shapes = []
+        for feat in proj_feats:
+            h, w = feat.shape[2:]
+            # [b, c, h, w] -> [b, h*w, c]
+            feats.append(feat.flatten(2).permute(0, 2, 1))
+            # [nl, 2]
+            shapes.append([h, w])
     
-        # Concatenate after projection
-        feats = torch.cat(processed_feats, dim=1)  # [b, total_channels, h, w]
-        
-        # Flatten for transformer processing
-        feats = feats.flatten(2).permute(0, 2, 1)  # [b, h*w, total_channels]
-        
-        return feats
-
+        # [b, h*w, c]
+        feats = torch.cat(feats, 1)
+        return feats, shapes
 
 
 
