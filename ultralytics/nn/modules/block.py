@@ -233,7 +233,7 @@ class BiFPN(nn.Module):
         self.epsilon = epsilon
         
         # Extract channel sizes from the list
-        p3_channels, p4_channels, p5_channels, p6_channels, p7_channels = c1
+        # p3_channels, p4_channels, p5_channels, p6_channels, p7_channels = c1
         feature_size = c2
         
         # Debug print
