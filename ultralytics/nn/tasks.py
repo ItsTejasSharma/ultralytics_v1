@@ -1054,6 +1054,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             feature_size = args[0]  # Expected first argument is feature_size
             num_layers = args[1] if len(args) > 1 else 2  # Default to 2 layers if not specified
             args = [c1, feature_size, num_layers]  # Adjust args to match BiFPN's expected inputs
+            c2 = args[0]  # Feature size # added in correction
+            n = args[1] if len(args) > 1 else 2
+            args = [c1, c2, n]  # c1: input channels, c2: feature size, n: num_layers
+
         elif m in frozenset({HGStem, HGBlock}):
             c1, cm, c2 = ch[f], args[0], args[1]
             args = [c1, cm, c2, *args[2:]]
@@ -1080,6 +1084,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             c2 = ch[-1]
             if verbose:
                 LOGGER.info(f"RTDETRDecoder args: nc={nc}, ch={ch}, hd={hd}")
+            args.insert(1, [ch[x] for x in f])# added in correction
+            c2 = args[1][-1]
+
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]
