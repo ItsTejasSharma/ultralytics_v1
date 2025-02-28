@@ -457,7 +457,7 @@ class RTDETRDecoder(nn.Module):
         x = [list(feat) if isinstance(feat, tuple) else feat for feat in x]
 
         # Ensure each feature is a tensor
-        x = [torch.stack(feat) if isinstance(feat, list) and isinstance(feat[0], torch.Tensor) else feat for feat in x]
+        x = [torch.cat(feat, dim=1) if isinstance(feat, list) and isinstance(feat[0], torch.Tensor) else feat for feat in x]
 
         print(f"RTDETRDecoder input shapes: {[feat.shape for feat in x]}")
         
