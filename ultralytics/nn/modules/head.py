@@ -451,8 +451,10 @@ class RTDETRDecoder(nn.Module):
         from ultralytics.models.utils.ops import get_cdn_group
 
         # Input projection and embedding
-        feats, shapes = self._get_encoder_input(x)
+        print(f"RTDETRDecoder input type: {type(x)}")  # Debugging print
+        print(f"RTDETRDecoder input shapes: {[feat.shape for feat in x]}")
 
+        x, shapes = self._get_encoder_input(x)
         # Prepare denoising training
         dn_embed, dn_bbox, attn_mask, dn_meta = get_cdn_group(
             batch,
@@ -512,8 +514,9 @@ class RTDETRDecoder(nn.Module):
             x = list(x)  # Convert to list if needed
 
         # Get projection features
-        x = [self.input_proj[i](feat) for i, feat in enumerate(x)]  # Ensure single tensors
-
+        for i, feat in enumerate(x):
+            print(f"Feature {i} type: {type(feat)} shape: {feat.shape}")
+            x[i] = self.input_proj[i](feat)  # Ensure feat is not a tuple
         # Get encoder inputs
         feats = []
         shapes = []
