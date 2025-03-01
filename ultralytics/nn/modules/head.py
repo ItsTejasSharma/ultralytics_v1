@@ -507,20 +507,33 @@ class RTDETRDecoder(nn.Module):
         anchors = anchors.masked_fill(~valid_mask, float("inf"))
         return anchors, valid_mask
 
-    def _get_encoder_input(self, x):
+def _get_encoder_input(self, x):
         """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
-        # Get projection features
-        x = [self.input_proj[i](feat) for i, feat in enumerate(x)]
+        # Debug print to see what's being passed in
+        print("Input to _get_encoder_input:", type(x))
+        if isinstance(x, list):
+            print("List length:", len(x))
+            print("First item type:", type(x[0]) if x else "Empty list")
+            if x and hasattr(x[0], 'shape'):
+                print("First item shape:", x[0].shape)
+        
+        # Get projection features - handle x as a list of tensors
+        projected_features = []
+        for i, feat in enumerate(x):
+            if i < len(self.input_proj):
+                # Apply projection to each feature
+                projected_features.append(self.input_proj[i](feat))
+        
         # Get encoder inputs
         feats = []
         shapes = []
-        for feat in x:
+        for feat in projected_features:
             h, w = feat.shape[2:]
             # [b, c, h, w] -> [b, h*w, c]
             feats.append(feat.flatten(2).permute(0, 2, 1))
             # [nl, 2]
             shapes.append([h, w])
-
+    
         # [b, h*w, c]
         feats = torch.cat(feats, 1)
         return feats, shapes
