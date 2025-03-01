@@ -17,6 +17,7 @@ from .utils import bias_init_with_prob, linear_init
 
 __all__ = "Detect", "Segment", "Pose", "Classify", "OBB", "RTDETRDecoder", "v10Detect"
 
+
 class Detect(nn.Module):
     """YOLO Detect head for detection models."""
 
@@ -169,7 +170,8 @@ class Detect(nn.Module):
         scores, index = scores.flatten(1).topk(min(max_det, anchors))
         i = torch.arange(batch_size)[..., None]  # batch indices
         return torch.cat([boxes[i, index // nc], scores[..., None], (index % nc)[..., None].float()], dim=-1)
-            
+
+
 class Segment(Detect):
     """YOLO Segment head for segmentation models."""
 
@@ -369,8 +371,8 @@ class RTDETRDecoder(nn.Module):
 
     def __init__(
         self,
-        nc=2,
-        ch=(256, 256, 256, 256, 256),
+        nc=80,
+        ch=(512, 1024, 2048),
         hd=256,  # hidden dim
         nq=300,  # num queries
         ndp=4,  # num decoder points
@@ -415,9 +417,9 @@ class RTDETRDecoder(nn.Module):
         self.num_decoder_layers = ndl
 
         # Backbone feature projection
-
-                # NOTE: simplified version but it's not consistent with .pt weights.
-        self.input_proj = nn.ModuleList(nn.Sequential(Conv(x, hd, act=False)) for x in ch)
+        self.input_proj = nn.ModuleList(nn.Sequential(nn.Conv2d(x, hd, 1, bias=False), nn.BatchNorm2d(hd)) for x in ch)
+        # NOTE: simplified version but it's not consistent with .pt weights.
+        # self.input_proj = nn.ModuleList(Conv(x, hd, act=False) for x in ch)
 
         # Transformer module
         decoder_layer = DeformableTransformerDecoderLayer(hd, nh, d_ffn, dropout, act, self.nl, ndp)
@@ -449,18 +451,10 @@ class RTDETRDecoder(nn.Module):
     def forward(self, x, batch=None):
         """Runs the forward pass of the module, returning bounding box and classification scores for the input."""
         from ultralytics.models.utils.ops import get_cdn_group
-        import torch.nn.functional as F
+
         # Input projection and embedding
-        print(f"RTDETRDecoder input type: {type(x)}")
-    
-        # Convert tuples inside x to lists
-        x = [list(feat) if isinstance(feat, tuple) else feat for feat in x]
+        feats, shapes = self._get_encoder_input(x)
 
-        x = x[:3]  # Use only p3, p4, p5 from BiFPN output
-
-        print(f"RTDETRDecoder input shapes: {[feat.shape for feat in x]}")
-        
-        x, shapes = self._get_encoder_input(x)
         # Prepare denoising training
         dn_embed, dn_bbox, attn_mask, dn_meta = get_cdn_group(
             batch,
@@ -514,30 +508,22 @@ class RTDETRDecoder(nn.Module):
         return anchors, valid_mask
 
     def _get_encoder_input(self, x):
-        """Processes BiFPN outputs correctly before sending to Transformer."""
-        
-        # x is a list of 5 feature maps from BiFPN: [p3_out, p4_out, p5_out, p6_out, p7_out]
-        # We need to use the first 3 for compatibility with the decoder
-        x = x[:3]  # Take only p3, p4, p5 from BiFPN output
-        
+        """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
         # Get projection features
-        proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(x)]
-        
+        x = [self.input_proj[i](feat) for i, feat in enumerate(x)]
         # Get encoder inputs
         feats = []
         shapes = []
-        for feat in proj_feats:
+        for feat in x:
             h, w = feat.shape[2:]
             # [b, c, h, w] -> [b, h*w, c]
             feats.append(feat.flatten(2).permute(0, 2, 1))
             # [nl, 2]
             shapes.append([h, w])
-    
+
         # [b, h*w, c]
         feats = torch.cat(feats, 1)
         return feats, shapes
-
-
 
     def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
         """Generates and prepares the input required for the decoder from the provided features and shapes."""
@@ -600,7 +586,7 @@ class RTDETRDecoder(nn.Module):
         xavier_uniform_(self.query_pos_head.layers[0].weight)
         xavier_uniform_(self.query_pos_head.layers[1].weight)
         for layer in self.input_proj:
-            xavier_uniform_(layer[0].conv.weight)
+            xavier_uniform_(layer[0].weight)
 
 
 class v10Detect(Detect):
