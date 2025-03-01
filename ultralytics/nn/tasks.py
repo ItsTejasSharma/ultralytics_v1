@@ -1075,18 +1075,12 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 m.legacy = legacy
         elif m is RTDETRDecoder:
             nc = args[0]
-            # This is where the problem might be
-            # Instead of passing the list of feature maps directly, we need to handle them properly
-            if isinstance(f, list):
-                # Get the channels from the feature maps
-                ch_list = [ch[x] for x in f]
-                # For RTDETRDecoder, we should pass the channels, not the feature maps
-                args = [nc, ch_list, args[1] if len(args) > 1 else 256]
-                c2 = args[2]  # Set output channels
-            else:
-                ch_val = ch[f]
-                args = [nc, [ch_val], args[1] if len(args) > 1 else 256]
-                c2 = args[2]
+            ch = args[1]
+            hd = args[2] if len(args) > 2 else 256
+            args = [nc, ch, hd]
+            c2 = ch[-1]
+            if verbose:
+                LOGGER.info(f"RTDETRDecoder args: nc={nc}, ch={ch}, hd={hd}")
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]
