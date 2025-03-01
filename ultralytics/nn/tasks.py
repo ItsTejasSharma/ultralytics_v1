@@ -1075,10 +1075,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 m.legacy = legacy
         elif m is RTDETRDecoder:
             nc = args[0]
-            ch = args[1]
+            ch = [ch[x] for x in f]  # Get input channels from the BiFPN outputs
             hd = args[2] if len(args) > 2 else 256
-            args = [nc, ch, hd]
-            c2 = ch[-1]
+            args = [nc, ch, hd]  # Pass the actual channel sizes from BiFPN
+            c2 = ch[-1]  # Set output channels
             if verbose:
                 LOGGER.info(f"RTDETRDecoder args: nc={nc}, ch={ch}, hd={hd}")
         elif m is CBLinear:
