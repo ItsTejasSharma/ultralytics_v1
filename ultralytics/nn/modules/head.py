@@ -511,9 +511,9 @@ class RTDETRDecoder(nn.Module):
         """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
         # Ensure x is a list of tensors
         if isinstance(x, (tuple, list)):
-            x = list(x)
+            x = list(x)  # Convert tuple to list
         else:
-            x = [x]
+            x = [x]  # Wrap single tensor in a list
     
         # Debug: Print input shapes
         print(f"Input to _get_encoder_input: {[t.shape for t in x]}")
