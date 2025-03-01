@@ -283,7 +283,9 @@ class BiFPN(nn.Module):
             features = bifpn(features)
             print(f"After BiFPN layer {i}: {[f.shape if f is not None else None for f in features]}") # Check each output
         
-        features = list(features)  # Ensure the output is a list
+        print(f"Type of features before conversion: {type(features)}")  # Should be <class 'tuple'>
+        features = list(features)
+        print(f"Type of features after conversion: {type(features)}")  # Should be <class 'list'>        
         return features
         
 class DFL(nn.Module):
