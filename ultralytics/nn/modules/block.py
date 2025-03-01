@@ -282,7 +282,8 @@ class BiFPN(nn.Module):
         for i, bifpn in enumerate(self.bifpn_layers):
             features = bifpn(features)
             print(f"After BiFPN layer {i}: {[f.shape if f is not None else None for f in features]}") # Check each output
-    
+        
+        features = list(features)  # Ensure the output is a list
         return features
         
 class DFL(nn.Module):
