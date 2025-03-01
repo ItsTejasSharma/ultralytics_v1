@@ -538,7 +538,7 @@ def _get_encoder_input(self, x):
         feats = torch.cat(feats, 1)
         return feats, shapes
     
-    def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
+def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
         
         """Generates and prepares the input required for the decoder from the provided features and shapes."""
         
