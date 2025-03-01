@@ -166,58 +166,6 @@ class BiFPNBlock(nn.Module):
         
         return p3_out, p4_out, p5_out, p6_out, p7_out
         
-# class BiFPN(nn.Module):
-#     """
-#     Bi-directional Feature Pyramid Network.
-
-#     Args:
-#         size (list of int):  The number of channels for the input feature maps (C3, C4, C5).
-#         feature_size (int): The number of channels in the BiFPN layers.
-#         num_layers (int): The number of BiFPN layers to stack.
-#         epsilon (float): A small value to prevent division by zero.
-
-#     Inputs:
-#         inputs (list of Tensor): A list of feature maps [C3, C4, C5] from the backbone.
-
-#     Outputs:
-#         list of Tensor: A list of refined feature maps [p3_out, p4_out, p5_out, p6_out, p7_out].
-
-#     """
-#     def __init__(self, size, feature_size=64, num_layers=2, epsilon=0.0001):
-#         super(BiFPN, self).__init__()
-#         self.epsilon = epsilon
-
-#         # Initialize the convolutions for each input feature map
-#         self.p3 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
-#         self.p4 = nn.Conv2d(size[1], feature_size, kernel_size=1, stride=1, padding=0)
-#         self.p5 = nn.Conv2d(size[2], feature_size, kernel_size=1, stride=1, padding=0)
-        
-#         # p6 is obtained via a 3x3 stride-2 conv on C5
-#         self.p6 = nn.Conv2d(size[2], feature_size, kernel_size=3, stride=2, padding=1)
-        
-#         # p7 is computed by applying ReLU followed by a 3x3 stride-2 conv on p6
-#         self.p7 = ConvBlock(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-
-#         # Create BiFPN layers
-#         self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size, epsilon) for _ in range(num_layers)])
-    
-#     def forward(self, inputs):
-#         c3, c4, c5 = inputs
-        
-#         # Calculate the input column of BiFPN
-#         p3_x = self.p3(c3)        
-#         p4_x = self.p4(c4)
-#         p5_x = self.p5(c5)
-#         p6_x = self.p6(c5)
-#         p7_x = self.p7(p6_x)
-        
-#         features = [p3_x, p4_x, p5_x, p6_x, p7_x]
-
-#         # Pass through each BiFPN layer
-#         for bifpn in self.bifpn_layers:
-#             features = bifpn(features)
-
-#         return features
 class BiFPN(nn.Module):
     """
     Bi-directional Feature Pyramid Network.
