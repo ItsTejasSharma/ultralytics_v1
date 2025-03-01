@@ -283,7 +283,7 @@ class BiFPN(nn.Module):
             features = bifpn(features)
             print(f"After BiFPN layer {i}: {[f.shape if f is not None else None for f in features]}") # Check each output
     
-        return features[0], features[1], features[2]
+        return [features[0], features[1], features[2]]
         
 class DFL(nn.Module):
     """
