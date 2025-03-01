@@ -507,7 +507,7 @@ class RTDETRDecoder(nn.Module):
         anchors = anchors.masked_fill(~valid_mask, float("inf"))
         return anchors, valid_mask
 
-def _get_encoder_input(self, x):
+    def _get_encoder_input(self, x):
         """Processes and returns encoder inputs by getting projection features from input and concatenating them."""
         # Debug print to see what's being passed in
         print("Input to _get_encoder_input:", type(x))
@@ -538,7 +538,7 @@ def _get_encoder_input(self, x):
         feats = torch.cat(feats, 1)
         return feats, shapes
     
-def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
+    def _get_decoder_input(self, feats, shapes, dn_embed=None, dn_bbox=None):
         
         """Generates and prepares the input required for the decoder from the provided features and shapes."""
         
