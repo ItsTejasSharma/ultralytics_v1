@@ -164,7 +164,7 @@ class BiFPNBlock(nn.Module):
         p7_out = self.p7_out(w2[0, 3] * p7_x + w2[1, 3] * p7_td + w2[2, 3] * F.interpolate(p6_out, scale_factor=0.5, mode='nearest'))
         print(f"BiFPNBlock: p7_out shape: {p7_out.shape if p7_out is not None else None}") # Check
         
-        return p3_out, p4_out, p5_out, p6_out, p7_out
+        return [p3_out, p4_out, p5_out, p6_out, p7_out]
         
 class BiFPN(nn.Module):
     """
@@ -177,29 +177,21 @@ class BiFPN(nn.Module):
     """
     def __init__(self, c1, c2=256, n=3, epsilon=0.0001):
         super(BiFPN, self).__init__()
-        self.n = n
-        self.epsilon = epsilon
-        
-        # Extract channel sizes from the list
-        p3_channels, p4_channels, p5_channels = c1
-        feature_size = c2
-        
-        # Debug print
-        print(f"BiFPN init: P3={p3_channels}, P4={p4_channels}, P5={p5_channels}, feature_size={feature_size}, n={n}")
-        
-        # Initialize the convolutions for each input feature map
-        self.p3 = nn.Conv2d(p3_channels, feature_size, kernel_size=1, stride=1, padding=0)
-        self.p4 = nn.Conv2d(p4_channels, feature_size, kernel_size=1, stride=1, padding=0)
-        self.p5 = nn.Conv2d(p5_channels, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p3 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
+        self.p4 = nn.Conv2d(size[1], feature_size, kernel_size=1, stride=1, padding=0)
+        self.p5 = nn.Conv2d(size[2], feature_size, kernel_size=1, stride=1, padding=0)
         
         # p6 is obtained via a 3x3 stride-2 conv on C5
-        self.p6 = nn.Conv2d(p5_channels, feature_size, kernel_size=3, stride=2, padding=1)
+        self.p6 = nn.Conv2d(size[2], feature_size, kernel_size=3, stride=2, padding=1)
         
         # p7 is computed by applying ReLU followed by a 3x3 stride-2 conv on p6
-        self.p7 = Conv(feature_size, feature_size, k=3, s=2, p=1)
-        # Create BiFPN layers
-        self.bifpn_layers = nn.ModuleList([BiFPNBlock(feature_size, epsilon) for _ in range(n)])
-    
+        self.p7 = ConvBlock(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
+
+        bifpns = []
+        for _ in range(num_layers):
+            bifpns.append(BiFPNBlock(feature_size))
+        self.bifpn = nn.Sequential(*bifpns)
+        
     def forward(self, x):
         """
         Args:
@@ -227,14 +219,7 @@ class BiFPN(nn.Module):
         print(f"BiFPN: p7_x shape: {p7_x.shape if p7_x is not None else None}")  # Check p7_x
 
         features = [p3_x, p4_x, p5_x, p6_x, p7_x]
-        for i, bifpn in enumerate(self.bifpn_layers):
-            features = bifpn(features)
-            print(f"After BiFPN layer {i}: {[f.shape if f is not None else None for f in features]}") # Check each output
-        
-        print(f"Type of features before conversion: {type(features)}")  # Should be <class 'tuple'>
-        features = list(features)
-        print(f"Type of features after conversion: {type(features)}")  # Should be <class 'list'>        
-        return features
+        return self.bifpn(features)
         
 class DFL(nn.Module):
     """
