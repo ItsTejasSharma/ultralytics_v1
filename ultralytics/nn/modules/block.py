@@ -131,7 +131,7 @@ class BiFPNBlock(nn.Module):
         
         # TODO: Init weights
         self.w1 = nn.Parameter(torch.Tensor(2, 4))
-        self.w1_relu = nn.SiLU()
+        self.w1_silu = nn.SiLU()
         self.w2 = nn.Parameter(torch.Tensor(3, 4))
         self.w2_silu = nn.SiLU()
 
