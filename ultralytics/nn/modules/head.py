@@ -589,7 +589,6 @@ class RTDETRDecoder(nn.Module):
             xavier_uniform_(layer[0].weight)
 
 
-
 class v10Detect(Detect):
     """
     v10 Detection head from https://arxiv.org/pdf/2405.14458.
