@@ -1076,11 +1076,13 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
             if not isinstance(args[0], int):
                 raise ValueError(f"RTDETRDecoder expects nc to be an integer, got {args[0]}")
-            if not isinstance(args[1], (list, tuple)):
-                raise ValueError(f"RTDETRDecoder expects ch to be a list or tuple, got {args[1]}")
-            if not isinstance(args[2], int):
-                raise ValueError(f"RTDETRDecoder expects hd to be an integer, got {args[2]}")
-            args.insert(1, [ch[x] for x in f])
+            if len(args) < 2:
+                raise ValueError(f"RTDETRDecoder expects at least two arguments (nc, hd), got {len(args)} arguments: {args}")
+            if not isinstance(args[1], int):
+                raise ValueError(f"RTDETRDecoder expects hd to be an integer, got {args[1]}")
+            # Insert ch (input channel sizes) at index 1
+            ch_input = [ch[x] for x in f]
+            args.insert(1, ch_input)  # ch is a list of input channel sizes
         elif m is CBLinear:
             c2 = args[0]
             c1 = ch[f]
