@@ -115,7 +115,7 @@ class BiFPNBlock(nn.Module):
     Outputs:
         list of Tensor: A list of refined feature maps [p3_out, p4_out, p5_out, p6_out, p7_out].
     """
-    def __init__(self, feature_size=256, epsilon=0.0001):
+        def __init__(self, feature_size=64, epsilon=0.0001):
         super(BiFPNBlock, self).__init__()
         self.epsilon = epsilon
         
@@ -129,26 +129,20 @@ class BiFPNBlock(nn.Module):
         self.p6_out = DepthwiseConvBlock(feature_size, feature_size)
         self.p7_out = DepthwiseConvBlock(feature_size, feature_size)
         
-        # Initialize weights with a uniform distribution for better training stability
-        self.w1 = nn.Parameter(torch.empty(2, 4))
-        nn.init.uniform_(self.w1, 0, 1)  # Initialize weights between 0 and 1
-        self.w2 = nn.Parameter(torch.empty(3, 4))
-        nn.init.uniform_(self.w2, 0, 1)  # Initialize weights between 0 and 1
-        
-        self.relu = nn.ReLU(inplace=False)  # Use a single ReLU instance
+        # TODO: Init weights
+        self.w1 = nn.Parameter(torch.Tensor(2, 4))
+        self.w1_relu = nn.ReLU()
+        self.w2 = nn.Parameter(torch.Tensor(3, 4))
+        self.w2_relu = nn.ReLU()
 
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
         
         # Calculate Top-Down Pathway
-        # Clone w1 and w2 to avoid in-place operations on parameters
-        w1 = self.w1.clone()  # Explicitly clone to avoid modifying the parameter
-        w1 = self.relu(w1)  # Apply ReLU to the cloned tensor
-        w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)  # Normalize
-        
-        w2 = self.w2.clone()  # Explicitly clone to avoid modifying the parameter
-        w2 = self.relu(w2)  # Apply ReLU to the cloned tensor
-        w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)  # Normalize
+        w1 = self.w1_relu(self.w1)
+        w1 /= torch.sum(w1, dim=0) + self.epsilon
+        w2 = self.w2_relu(self.w2)
+        w2 /= torch.sum(w2, dim=0) + self.epsilon
         
         p7_td = p7_x
         p6_td = self.p6_td(w1[0, 0] * p6_x + w1[1, 0] * F.interpolate(p7_td, scale_factor=2, mode='nearest'))        
@@ -175,7 +169,7 @@ class BiFPN(nn.Module):
         c2 (int): Output feature size for all levels
         n (int): Number of BiFPN layers to stack
     """
-    def __init__(self, c1, c2=256, n=3, epsilon=0.0001):
+    def __init__(self, size, feature_size=64, num_layers=2, epsilon=0.0001):
         super(BiFPN, self).__init__()
         self.p3 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
         self.p4 = nn.Conv2d(size[1], feature_size, kernel_size=1, stride=1, padding=0)
