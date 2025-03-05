@@ -1074,6 +1074,12 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             if m in {Detect, Segment, Pose, OBB}:
                 m.legacy = legacy
         elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+            if not isinstance(args[0], int):
+                raise ValueError(f"RTDETRDecoder expects nc to be an integer, got {args[0]}")
+            if not isinstance(args[1], (list, tuple)):
+                raise ValueError(f"RTDETRDecoder expects ch to be a list or tuple, got {args[1]}")
+            if not isinstance(args[2], int):
+                raise ValueError(f"RTDETRDecoder expects hd to be an integer, got {args[2]}")
             args.insert(1, [ch[x] for x in f])
         elif m is CBLinear:
             c2 = args[0]
