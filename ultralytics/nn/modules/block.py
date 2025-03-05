@@ -115,7 +115,7 @@ class BiFPNBlock(nn.Module):
     Outputs:
         list of Tensor: A list of refined feature maps [p3_out, p4_out, p5_out, p6_out, p7_out].
     """
-        def __init__(self, feature_size=64, epsilon=0.0001):
+    def __init__(self, feature_size=64, epsilon=0.0001):
         super(BiFPNBlock, self).__init__()
         self.epsilon = epsilon
         
