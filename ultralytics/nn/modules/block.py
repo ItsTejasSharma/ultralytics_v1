@@ -131,17 +131,17 @@ class BiFPNBlock(nn.Module):
         
         # TODO: Init weights
         self.w1 = nn.Parameter(torch.Tensor(2, 4))
-        self.w1_relu = nn.ReLU()
+        self.w1_relu = nn.SiLU()
         self.w2 = nn.Parameter(torch.Tensor(3, 4))
-        self.w2_relu = nn.ReLU()
+        self.w2_silu = nn.SiLU()
 
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
         
         # Calculate Top-Down Pathway
-        w1 = self.w1_relu(self.w1)
+        w1 = self.w1_silu(self.w1)
         w1 /= torch.sum(w1, dim=0) + self.epsilon
-        w2 = self.w2_relu(self.w2)
+        w2 = self.w2_silu(self.w2)
         w2 /= torch.sum(w2, dim=0) + self.epsilon
         
         p7_td = p7_x
