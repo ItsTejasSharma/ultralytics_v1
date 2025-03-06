@@ -143,10 +143,10 @@ class BiFPNBlock(nn.Module):
 
         # Calculate Top-Down Pathway
         # Calculate Top-Down Pathway
-        w1 = self.w1_relu(self.w1)  # Apply ReLU
+        w1 = self.w1_relu(self.w1.clone())  # Use a cloned tensor
         w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)  # Reassign to avoid in-place operation
         
-        w2 = self.w2_relu(self.w2)  # Apply ReLU
+        w2 = self.w2_relu(self.w2.clone())  # Apply ReLU
         w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)  # Reassign to avoid in-place operation
 
 
