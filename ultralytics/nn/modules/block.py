@@ -68,7 +68,7 @@ class DepthwiseConvBlock(nn.Module):
                                    stride=1, padding=0, dilation=1, groups=1, bias=False)
 
         self.bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=1e-3)  # Adjusted values
-        self.act = nn.SiLU()
+        self.act = nn.ReLU()
         self.freeze_bn = freeze_bn
         if self.freeze_bn:
             self.bn.eval()
@@ -130,9 +130,9 @@ class BiFPNBlock(nn.Module):
         self.p7_out = DepthwiseConvBlock(feature_size, feature_size)
 
         self.w1 = nn.Parameter(torch.Tensor(2, 4))
-        self.w1_silu = nn.SiLU(inplace=False)  # Explicitly set inplace=False
+        self.w1_relu = nn.ReLU(inplace=False)  # Explicitly set inplace=False
         self.w2 = nn.Parameter(torch.Tensor(3, 4))
-        self.w2_silu = nn.SiLU(inplace=False)  # Explicitly set inplace=False
+        self.w2_relu = nn.ReLU(inplace=False)  # Explicitly set inplace=False
 
         # Initialize weights
         nn.init.kaiming_normal_(self.w1, mode='fan_out', nonlinearity='relu')
@@ -142,10 +142,13 @@ class BiFPNBlock(nn.Module):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
 
         # Calculate Top-Down Pathway
-        w1 = torch.silu(self.w1)  # Use torch.silu directly
-        w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)
-        w2 = torch.silu(self.w2)  # Use torch.silu directly
-        w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)
+        # Calculate Top-Down Pathway
+        w1 = self.w1_relu(self.w1)  # Apply ReLU
+        w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)  # Reassign to avoid in-place operation
+        
+        w2 = self.w2_relu(self.w2)  # Apply ReLU
+        w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)  # Reassign to avoid in-place operation
+
 
         p7_td = p7_x
         p6_td = self.p6_td(w1[0, 0] * p6_x + w1[1, 0] * F.interpolate(p7_td, scale_factor=2, mode='nearest'))
