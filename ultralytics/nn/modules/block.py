@@ -118,39 +118,42 @@ class BiFPNBlock(nn.Module):
     def __init__(self, feature_size=64, epsilon=0.0001):
         super(BiFPNBlock, self).__init__()
         self.epsilon = epsilon
-        
+
         self.p3_td = DepthwiseConvBlock(feature_size, feature_size)
         self.p4_td = DepthwiseConvBlock(feature_size, feature_size)
         self.p5_td = DepthwiseConvBlock(feature_size, feature_size)
         self.p6_td = DepthwiseConvBlock(feature_size, feature_size)
-        
+
         self.p4_out = DepthwiseConvBlock(feature_size, feature_size)
         self.p5_out = DepthwiseConvBlock(feature_size, feature_size)
         self.p6_out = DepthwiseConvBlock(feature_size, feature_size)
         self.p7_out = DepthwiseConvBlock(feature_size, feature_size)
-        
-        # TODO: Init weights
+
         self.w1 = nn.Parameter(torch.Tensor(2, 4))
         self.w1_silu = nn.SiLU(inplace=False)  # Explicitly set inplace=False
         self.w2 = nn.Parameter(torch.Tensor(3, 4))
         self.w2_silu = nn.SiLU(inplace=False)  # Explicitly set inplace=False
-        
+
+        # Initialize weights
+        nn.init.kaiming_normal_(self.w1, mode='fan_out', nonlinearity='silu')
+        nn.init.kaiming_normal_(self.w2, mode='fan_out', nonlinearity='silu')
+
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
-        
+
         # Calculate Top-Down Pathway
-        w1 = self.w1_silu(self.w1)
-        w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)  # Non-in-place normalization
-        w2 = self.w2_silu(self.w2)
-        w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)  # Non-in-place normalization
-        
+        w1 = torch.silu(self.w1)  # Use torch.silu directly
+        w1 = w1 / (torch.sum(w1, dim=0) + self.epsilon)
+        w2 = torch.silu(self.w2)  # Use torch.silu directly
+        w2 = w2 / (torch.sum(w2, dim=0) + self.epsilon)
+
         p7_td = p7_x
-        p6_td = self.p6_td(w1[0, 0] * p6_x + w1[1, 0] * F.interpolate(p7_td, scale_factor=2, mode='nearest'))        
+        p6_td = self.p6_td(w1[0, 0] * p6_x + w1[1, 0] * F.interpolate(p7_td, scale_factor=2, mode='nearest'))
         p5_td = self.p5_td(w1[0, 1] * p5_x + w1[1, 1] * F.interpolate(p6_td, scale_factor=2, mode='nearest'))
         p4_td = self.p4_td(w1[0, 2] * p4_x + w1[1, 2] * F.interpolate(p5_td, scale_factor=2, mode='nearest'))
         p3_td = self.p3_td(w1[0, 3] * p3_x + w1[1, 3] * F.interpolate(p4_td, scale_factor=2, mode='nearest'))
         print(f"BiFPNBlock: p3_td shape: {p3_td.shape if p3_td is not None else None}") # Check
-        
+
         # Calculate Bottom-Up Pathway
         p3_out = p3_td
         p4_out = self.p4_out(w2[0, 0] * p4_x + w2[1, 0] * p4_td + w2[2, 0] * F.interpolate(p3_out, scale_factor=0.5, mode='nearest'))
@@ -158,8 +161,9 @@ class BiFPNBlock(nn.Module):
         p6_out = self.p6_out(w2[0, 2] * p6_x + w2[1, 2] * p6_td + w2[2, 2] * F.interpolate(p5_out, scale_factor=0.5, mode='nearest'))
         p7_out = self.p7_out(w2[0, 3] * p7_x + w2[1, 3] * p7_td + w2[2, 3] * F.interpolate(p6_out, scale_factor=0.5, mode='nearest'))
         print(f"BiFPNBlock: p7_out shape: {p7_out.shape if p7_out is not None else None}") # Check
-        
-        return [p3_out, p4_out, p5_out, p6_out, p7_out]   
+
+        return [p3_out, p4_out, p5_out, p6_out, p7_out]
+ 
         
 class BiFPN(nn.Module):
     """
