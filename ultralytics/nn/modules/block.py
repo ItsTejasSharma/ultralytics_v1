@@ -135,8 +135,8 @@ class BiFPNBlock(nn.Module):
         self.w2_silu = nn.SiLU(inplace=False)  # Explicitly set inplace=False
 
         # Initialize weights
-        nn.init.kaiming_normal_(self.w1, mode='fan_out', nonlinearity='silu')
-        nn.init.kaiming_normal_(self.w2, mode='fan_out', nonlinearity='silu')
+        nn.init.kaiming_normal_(self.w1, mode='fan_out', nonlinearity='relu')
+        nn.init.kaiming_normal_(self.w2, mode='fan_out', nonlinearity='relu')
 
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
