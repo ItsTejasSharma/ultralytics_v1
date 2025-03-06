@@ -179,10 +179,16 @@ class BiFPN(nn.Module):
     """
     def __init__(self, c1, c2=256, n=3, epsilon=0.0001):
         super(BiFPN, self).__init__()
+        if not isinstance(c1, list):
+            raise ValueError(f"BiFPN expects a list of input channels, got {type(c1)}")
+        
+        # Ensure c1 has the correct number of inputs
+        if len(c1) < 3:
+            raise ValueError(f"BiFPN expects at least 3 input channels, got {len(c1)}")
+        
         self.p3 = nn.Conv2d(c1[0], c2, kernel_size=1, stride=1, padding=0)
         self.p4 = nn.Conv2d(c1[1], c2, kernel_size=1, stride=1, padding=0)
-        self.p5 = nn.Conv2d(c1[2], c2, kernel_size=1, stride=1, padding=0)
-        
+        self.p5 = nn.Conv2d(c1[2], c2, kernel_size=1, stride=1, padding=0)        
         # p6 is obtained via a 3x3 stride-2 conv on C5
         self.p6 = nn.Conv2d(c1[2], c2, kernel_size=3, stride=2, padding=1)
         
