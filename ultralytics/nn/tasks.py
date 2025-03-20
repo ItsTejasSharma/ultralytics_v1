@@ -1095,7 +1095,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             c1 = ch[f]
             args = [*args[1:]]
         elif m is BiFPN:
-            c2 = args[0]  # Set output channels to feature_size (256 in this case)
+            size = [ch[x] for x in f]  # Get input channel sizes, e.g., [256, 512, 1024]
+            args = [size, *args]       # Prepend size to args, e.g., [[256, 512, 1024], 256, 2]
+            c2 = args[1]               # feature_size, e.g., 256
         else:
             c2 = ch[f]
 
