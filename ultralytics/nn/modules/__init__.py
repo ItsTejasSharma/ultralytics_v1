@@ -62,6 +62,7 @@ from .block import (
     BiFPNBlock,
     DepthwiseConvBlock,
     ConvBlock,
+    Select,
 )
 from .conv import (
     CBAM,
@@ -170,4 +171,5 @@ __all__ = (
     "BiFPNBlock",
     "DepthwiseConvBlock",
     "ConvBlock",
+    "Select",
 )
