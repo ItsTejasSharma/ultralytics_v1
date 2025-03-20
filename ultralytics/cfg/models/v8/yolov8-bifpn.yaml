@@ -52,4 +52,4 @@ head:
   - [10, 1, Index, [1]]              # 12: Select p4_out (index 1 from BiFPN output)
   - [10, 1, Index, [2]]              # 13: Select p5_out (index 2 from BiFPN output)
   - [[11, 12, 13], 1, Detect, [nc]]  # Detect head using p3_out, p4_out, p5_out
-  - [[10, 10, 10], 1, Detect, [nc]] # Detect(P3, P4, P5)
+  # - [[10, 10, 10], 1, Detect, [nc]] # Detect(P3, P4, P5)
