@@ -51,5 +51,7 @@ head:
   - [10, 1, Select, [0]]              # 11: Select p3_out (index 0 from BiFPN output)
   - [10, 1, Select, [1]]              # 12: Select p4_out (index 1 from BiFPN output)
   - [10, 1, Select, [2]]              # 13: Select p5_out (index 2 from BiFPN output)
-  - [[11, 12, 13], 1, Detect, [nc]]  # Detect head using p3_out, p4_out, p5_out
+  - [10, 1, Select, [3]]              # 14: Select p6_out (index 2 from BiFPN output)
+  - [10, 1, Select, [3]]              # 15: Select p7_out (index 2 from BiFPN output)
+  - [[11, 12, 13, 14, 15], 1, Detect, [nc]]  # Detect head using p3_out, p4_out, p5_out
   # - [[10, 10, 10], 1, Detect, [nc]] # Detect(P3, P4, P5)
