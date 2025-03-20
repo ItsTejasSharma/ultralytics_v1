@@ -47,7 +47,7 @@ backbone:
   # - [-1, 3, C2f, [1024]] # 21 (P5/32-large)
   # YOLOv8.0n head
 head:
-  - [[4, 6, 9], 1, BiFPN, [256, 2]]  # 10: BiFPN, outputs [p3_out, p4_out, p5_out, p6_out, p7_out]
+  - [[4, 6, 9], 1, BiFPN, [512, 2]]  # 10: BiFPN, outputs [p3_out, p4_out, p5_out, p6_out, p7_out]
   - [10, 1, Select, [0]]              # 11: Select p3_out (index 0 from BiFPN output)
   - [10, 1, Select, [1]]              # 12: Select p4_out (index 1 from BiFPN output)
   - [10, 1, Select, [2]]              # 13: Select p5_out (index 2 from BiFPN output)
