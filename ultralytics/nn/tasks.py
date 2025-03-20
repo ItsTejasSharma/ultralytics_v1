@@ -1049,11 +1049,11 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                     args.extend((True, 1.2))
         elif m is AIFI:
             args = [ch[f], *args]
-        # elif m is BiFPN:
-        #     c1 = [ch[x] for x in f] if isinstance(f, list) else [ch[f]]  # Ensure c1 is always a list
-        #     feature_size = args[0]  # Expected first argument is feature_size
-        #     num_layers = args[1] if len(args) > 1 else 2  # Default to 2 layers if not specified
-        #     args = [c1, feature_size, num_layers]  # Pass full list of input channels
+        elif m is BiFPN:
+            c1 = [ch[x] for x in f] if isinstance(f, list) else [ch[f]]  # Ensure c1 is always a list
+            feature_size = args[0]  # Expected first argument is feature_size
+            num_layers = args[1] if len(args) > 1 else 2  # Default to 2 layers if not specified
+            args = [c1, feature_size, num_layers]  # Pass full list of input channels
                     
         elif m in frozenset({HGStem, HGBlock}):
             c1, cm, c2 = ch[f], args[0], args[1]
