@@ -6,11 +6,6 @@ This repository contains the implementation of our improved YOLO-based approach 
 
 We propose a novel deep learning model that, for the first time in this domain, integrates a dual-branch structure combining CNN and Swin Transformer. The model enhances multi-scale feature representation through SPPF, optimizes channel information via ECA, and achieves efficient feature fusion with BiFPN. Furthermore, the detection head employs a decoupled structure to improve overall performance and robustness.
 
-
-## Research Context
-
-This work is part of ongoing research in [Your Research Area/Domain]. The customizations implemented here aim to [briefly describe your research goals/improvements].
-
 ## Base Framework
 
 - **Base Model**: YOLO (Ultralytics implementation)
