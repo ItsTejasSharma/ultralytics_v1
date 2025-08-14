@@ -1,8 +1,11 @@
-# Custom YOLO Object Detection Model
+# A Dual Track YOLO-based Network for fire and smoke detection
 
 ## Overview
 
-This repository contains a customized YOLO (You Only Look Once) model built upon the Ultralytics framework. The model has been extensively modified with custom configurations, functions, and modules to support specific research objectives in object detection.
+This repository contains the implementation of our improved YOLO-based approach for fire and smoke detection. Our method achieves state-of-the-art detection accuracy on the D-Fire dataset, offering enhanced precision in challenging scenarios. 
+
+We propose a novel deep learning model that, for the first time in this domain, integrates a dual-branch structure combining CNN and Swin Transformer. The model enhances multi-scale feature representation through SPPF, optimizes channel information via ECA, and achieves efficient feature fusion with BiFPN. Furthermore, the detection head employs a decoupled structure to improve overall performance and robustness.
+
 
 ## Research Context
 
