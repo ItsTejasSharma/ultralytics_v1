@@ -8,19 +8,21 @@ We propose a novel deep learning model that, for the first time in this domain, 
 
 ## Base Framework
 
-- **Base Model**: YOLO (Ultralytics implementation)
+- **Base Model**: YOLO11 (Ultralytics implementation)
 - **Original Repository**: [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics)
-- **Framework Version**: [Specify version used]
 
-## Key Modifications and Customizations
+## Key Modifications and Contributions
 
 ### 1. Configuration Files (YAML)
-- **Location**: `configs/` directory
+- **Location**: `Ultralytics/ultralytics/cfg/models/yamls/` directory
 - **Purpose**: Custom training configurations, model architectures, and hyperparameter settings
 - **Key Files**:
-  - `custom_model.yaml` - Modified model architecture
-  - `training_config.yaml` - Custom training parameters
-  - `dataset_config.yaml` - Dataset-specific configurations
+  - `CNN_track.yaml` - Architecture of CNN-Track composed of Depthwise Separable C3k2 (DWC3k2) blocks. The CNN track specializes in local feature extraction.
+  - `Swin_track.yaml` - Architecture of Swin-Track consisting of Swin transformer blocks. The Swin track specializes in global feature extraction.
+  - `dualTrack.yaml` - Architecture of the Dual track configuration concatenating feature maps at three distinct scales.
+  - `dualTrack_attention.yaml` - Architecture of Dual track configuration with Efficient Channel Attention (ECA) module , which enhances channel-wise feature representations with minimal computational overhead.
+  - `proposedNetwork.yaml` - Architecture of the proposed network encompassing the dual-branch structure, ECA and Bidirectional Feature Pyramid Network (BiFPN).
+
 
 ### 2. Custom Modules
 - **Location**: `custom_modules/` directory
