@@ -11,6 +11,7 @@ We propose a novel deep learning model that, for the first time in this domain, 
 - **Base Model**: YOLO11 (Ultralytics implementation)
 - **Original Repository**: [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics)
 
+
 ## Key Modifications and Contributions
 
 ### 1. Configuration Files (YAML)
