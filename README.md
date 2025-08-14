@@ -6,12 +6,6 @@ This repository contains the implementation of our improved YOLO-based approach 
 
 We propose a novel deep learning model that, for the first time in this domain, integrates a dual-branch structure combining CNN and Swin Transformer. The model enhances multi-scale feature representation through SPPF, optimizes channel information via ECA, and achieves efficient feature fusion with BiFPN. Furthermore, the detection head employs a decoupled structure to improve overall performance and robustness.
 
-## Base Framework
-
-- **Base Model**: YOLO11 (Ultralytics implementation)
-- **Original Repository**: [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics)
-
-
 ## Key Modifications and Contributions
 
 ### 1. Configuration Files (YAML)
@@ -50,7 +44,7 @@ from ultralytics import YOLO
 !yolo train model=proposedModel.yaml data=data_yaml.yaml epochs=100 imgsz=640 device="cpu"
 ```
 
-# Perform object detection on an image
+### Perform object detection on an image
 ```bash
 results = model("path/to/image.jpg")  # Predict on an image
 results[0].show()  # Display results
@@ -138,18 +132,14 @@ If you use this work in your research, please cite:
 }
 ```
 
-## Contributing
-
-This is a research-focused project. For questions or collaboration inquiries, please contact [your-email@domain.com].
-
-## License
-
-[Specify your license - typically should be compatible with Ultralytics' license]
-
 ## Acknowledgments
 
-- Original YOLO implementation by Ultralytics
-- [Any other acknowledgments for datasets, collaborators, etc.]
+-  **Original YOLO implementation by Ultralytics**: [ultralytics](https://github.com/ultralytics/ultralytics)
+
+- D-Fire Dataset:
+  Pedro Vinícius Almeida Borges de Venâncio, Adriano Chaves Lisboa, Adriano Vilela Barbosa: An automatic fire detection system based on deep convolutional neural networks for low-power, resource-constrained    devices. In: Neural Computing and Applications, 2022.
+
+
 
 ---
 
