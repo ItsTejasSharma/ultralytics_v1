@@ -22,31 +22,7 @@ We propose a novel deep learning model that, for the first time in this domain, 
   - `dualTrack.yaml` - Architecture of the Dual track configuration concatenating feature maps at three distinct scales.
   - `dualTrack_attention.yaml` - Architecture of Dual track configuration with Efficient Channel Attention (ECA) module , which enhances channel-wise feature representations with minimal computational overhead.
   - `proposedNetwork.yaml` - Architecture of the proposed network encompassing the dual-branch structure, ECA and Bidirectional Feature Pyramid Network (BiFPN).
-
-
-### 2. Custom Modules
-- **Location**: `custom_modules/` directory
-- **Description**: Modified and new neural network components
-- **Key Components**:
-  - Custom backbone architectures
-  - Modified neck/head structures
-  - Novel attention mechanisms
-  - Custom loss functions
-
-### 3. Custom Functions
-- **Location**: `utils/custom_utils.py` and various module files
-- **Functionality**:
-  - Data preprocessing pipelines
-  - Custom augmentation techniques
-  - Evaluation metrics
-  - Visualization tools
-
-### 4. Training Pipeline Modifications
-- Enhanced data loading mechanisms
-- Custom callback functions
-- Modified optimizer configurations
-- Advanced learning rate scheduling
-
+    
 ## Installation
 
 ### Prerequisites
