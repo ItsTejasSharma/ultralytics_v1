@@ -64,12 +64,12 @@ metrics = model.val()
 ## Experimental Results
 
 ### Performance Metrics
-- **mAP@0.5**: 
-- **Precison**: [Your results]
-- **Recall**: [Your results]
-- **GFLOPs**: [Your results]
-- **FPS**:
-- **Inference Time**:
+- **mAP@0.5**: 81.0
+- **Precison**: 79.4
+- **Recall**: 75.7
+- **GFLOPs**: 58.2
+- **FPS**: 20.67
+- **Inference Time**: 48.38
 
 ### Comparison with State-of-the-art methods for object detection on the DFire dataset.
 | Model    | Precision (%) | Recall (%) | mAP@0.5 (%) | GFLOPs | FPS   | Inference Time (ms) |
